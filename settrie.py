@@ -8,7 +8,6 @@ Requires Python3
 Version 1.0
 Release date: 2014-12-06
 Author: Márton Miháltz 
-<mmihaltz@gmail.com>
 https://sites.google.com/site/mmihaltz/
 
 Settrie is a pure-python module that provides support for efficient storage and querying of sets of sets using the trie data structure,

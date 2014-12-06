@@ -3,7 +3,6 @@
 Unit tests for module PySetTrie (see settrie.py).
 
 Author: Márton Miháltz 
-<mmihaltz@gmail.com>
 https://sites.google.com/site/mmihaltz/
 """
 
