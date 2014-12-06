@@ -14,17 +14,22 @@ For further documentation, please see docstring comments in the source file (set
 Module test_settrie.py contains unittests for SetTrie and SetTrieMap classes.
 
 Version 1.0
+
 Release date: 2014-12-06
-Author: Márton Miháltz 
-<mmihaltz@gmail.com>
+
+Author: Márton Miháltz <mmihaltz@gmail.com>
 [https://sites.google.com/site/mmihaltz/](https://sites.google.com/site/mmihaltz/)
 
 This module depends on the [sortedcollection](http://grantjenks.com/docs/sortedcontainers/) module.
 One recommended way to install (tested on Ubuntu):
+```
 sudo pip3 install sortedcontainers
+```
 If you don't have pip3:
+```
 sudo apt-get install python3-setuptools
 sudo easy_install3 pip
+```
 
 Based on:
 I.Savnik: Index data structure for fast subset and superset queries. CD-ARES, IFIP LNCS, 2013.
@@ -37,5 +42,5 @@ See also:
 http://stackoverflow.com/questions/9353100/quickly-checking-if-set-is-superset-of-stored-sets
 http://stackoverflow.com/questions/1263524/superset-search?rq=1
 
-Licensed under the [GNU LESSER GENERAL PUBLIC LICENSE, Version 3](See https://www.gnu.org/licenses/lgpl.html).
+Licensed under the [GNU LESSER GENERAL PUBLIC LICENSE, Version 3](https://www.gnu.org/licenses/lgpl.html).
 
