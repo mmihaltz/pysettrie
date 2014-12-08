@@ -6,7 +6,9 @@ Module settrie
 Requires Python3
 
 Version 1.0
+
 Release date: 2014-12-06
+
 Author: Márton Miháltz 
 https://sites.google.com/site/mmihaltz/
 
@@ -14,28 +16,21 @@ Settrie is a pure-python module that provides support for efficient storage and 
 supporting operations like finding all the supersets/subsets of a given set from a collection of sets.
 
 The following classes are included:
-SetTrie: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations.
-SetTrieMap: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.
 
-This module depends on the sortedcollection module (http://grantjenks.com/docs/sortedcontainers/)
-One recommended way to install (tested on Ubuntu):
-sudo pip3 install sortedcontainers
-If you don't have pip3:
-sudo apt-get install python3-setuptools
-sudo easy_install3 pip
+* :py:class:`SetTrie`: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations.
+* :py:class:`SetTrieMap`: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.
 
-If you execute this module from the command line a suite of unittests will be peformed.
+This module depends on the sortedcollection module (http://grantjenks.com/docs/sortedcontainers/).
+One recommended way to install (tested on Ubuntu)::
 
-Based on:
-I.Savnik: Index data structure for fast subset and superset queries. CD-ARES, IFIP LNCS, 2013.
-http://osebje.famnit.upr.si/~savnik/papers/cdares13.pdf
-Remarks on paper: 
-- Algorithm 1. does not mention to sort children (or do sorted insert) in insert operation (line 5)
-- Algorithm 4. is wrong, will always return false, line 7 should be: "for (each child of node labeled l: word.currentElement <= l) & (while not found) do"
-- the descriptions of getAllSubSets and getAllSuperSets operations are wrong, would not produce all sub/supersets
-See also:
-http://stackoverflow.com/questions/9353100/quickly-checking-if-set-is-superset-of-stored-sets
-http://stackoverflow.com/questions/1263524/superset-search?rq=1
+  sudo pip3 install sortedcontainers
+
+If you don't have pip3::
+
+  sudo apt-get install python3-setuptools
+  sudo easy_install3 pip
+
+For more information see README.md.
 
 Licensed under the GNU LESSER GENERAL PUBLIC LICENSE, Version 3.
 See https://www.gnu.org/licenses/lgpl.html
@@ -47,10 +42,26 @@ import sortedcontainers
 
 class SetTrie:
   """Set-trie container of sets for efficient supersets/subsets of a set over a set of sets queries.
+     
+     Usage:
+     ------
+     >>> from settrie import SetTrie
+     >>> t = SetTrie( [{1, 3}, {1, 2, 3}] )
+     >>> t.add( {3, 4, 5} )
+     >>> t
+     [{1, 2, 3}, {1, 3}, {3, 4, 5}]
+     >>> {1, 3} in t
+     True
+     >>> t.hassuperset( {1, 3} )
+     True
+     >>> t.supersets( {1, 3} )
+     [{1, 2, 3}, {1, 3}]
+     >>> t.subsets({1, 2, 3, 5})
+     [{1, 2, 3}, {1, 3}]
   """
 
   class Node:
-    """Node object to be used by SetTrie."""
+    """Node object used by SetTrie."""
     
     def __init__(self, data=None):
       self.children = sortedcontainers.SortedList() # child nodes a.k.a. children
@@ -101,6 +112,7 @@ class SetTrie:
     
   def __contains__(self, aset):
     """Returns True iff this set-trie contains set aset.
+       
        This method definition allows the use of the 'in' operator, for example:
        >>> t = SetTrie()
        >>> t.add( {1, 3} )
@@ -237,6 +249,7 @@ class SetTrie:
   def __iter__(self):
     """Returns an iterator over the sets stored in this set-trie (with pre-order tree traversal).
        The sets are returned in sorted order with their elements sorted.
+       
        This method definition enables direct iteration over a SetTrie, for example:
        >>> t = SetTrie([{1, 2}, {2, 3, 4}])
        >>> for s in t:
@@ -291,7 +304,28 @@ class SetTrie:
 class SetTrieMap:
   """ Mapping container for efficient storage of key-value pairs where the keys are sets.
       Uses efficient trie implementation. Supports querying for values associated to subsets or supersets
-      of stored sets.
+      of stored key sets.
+      
+      Usage:
+      ------
+      >>> from settrie import SetTrieMap
+      >>> m.assign({1,2}, 'A')
+      >>> m.assign({1,2,3}, 'B')
+      >>> m.assign({2,3,5}, 'C')
+      >>> m
+      [({1, 2}, 'A'), ({1, 2, 3}, 'B'), ({2, 3, 5}, 'C')]
+      >>> m.get( {1,2,3} )
+      'B'
+      >>> m.get( {1, 2, 3, 4}, 'Nope!')
+      'Nope!'
+      >>> list(m.keys())
+      [{1, 2}, {1, 2, 3}, {2, 3, 5}]
+      >>> m.supersets( {1,2} )
+      [({1, 2}, 'A'), ({1, 2, 3}, 'B')]
+      >>> m.supersets({1, 2}, mode='keys')
+      [{1, 2}, {1, 2, 3}]
+      >>> m.supersets({1, 2}, mode='values')
+      ['A', 'B']
   """
 
   class Node:

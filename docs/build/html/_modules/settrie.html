@@ -1,0 +1,722 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>settrie &mdash; pysettrie  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="pysettrie  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">pysettrie  documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for settrie</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python3</span>
+<span class="c"># coding: utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module settrie </span>
+
+<span class="sd">Requires Python3</span>
+
+<span class="sd">Version 1.0</span>
+
+<span class="sd">Release date: 2014-12-06</span>
+
+<span class="sd">Author: Márton Miháltz </span>
+<span class="sd">https://sites.google.com/site/mmihaltz/</span>
+
+<span class="sd">Settrie is a pure-python module that provides support for efficient storage and querying of sets of sets using the trie data structure,</span>
+<span class="sd">supporting operations like finding all the supersets/subsets of a given set from a collection of sets.</span>
+
+<span class="sd">The following classes are included:</span>
+
+<span class="sd">* :py:class:`SetTrie`: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations.</span>
+<span class="sd">* :py:class:`SetTrieMap`: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.</span>
+
+<span class="sd">This module depends on the sortedcollection module (http://grantjenks.com/docs/sortedcontainers/).</span>
+<span class="sd">One recommended way to install (tested on Ubuntu)::</span>
+
+<span class="sd">  sudo pip3 install sortedcontainers</span>
+
+<span class="sd">If you don&#39;t have pip3::</span>
+
+<span class="sd">  sudo apt-get install python3-setuptools</span>
+<span class="sd">  sudo easy_install3 pip</span>
+
+<span class="sd">For more information see README.md.</span>
+
+<span class="sd">Licensed under the GNU LESSER GENERAL PUBLIC LICENSE, Version 3.</span>
+<span class="sd">See https://www.gnu.org/licenses/lgpl.html</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">sortedcontainers</span>
+
+<div class="viewcode-block" id="SetTrie"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie">[docs]</a><span class="k">class</span> <span class="nc">SetTrie</span><span class="p">:</span>
+  <span class="sd">&quot;&quot;&quot;Set-trie container of sets for efficient supersets/subsets of a set over a set of sets queries.</span>
+<span class="sd">     </span>
+<span class="sd">     Usage:</span>
+<span class="sd">     ------</span>
+<span class="sd">     &gt;&gt;&gt; from settrie import SetTrie</span>
+<span class="sd">     &gt;&gt;&gt; t = SetTrie( [{1, 3}, {1, 2, 3}] )</span>
+<span class="sd">     &gt;&gt;&gt; t.add( {3, 4, 5} )</span>
+<span class="sd">     &gt;&gt;&gt; t</span>
+<span class="sd">     [{1, 2, 3}, {1, 3}, {3, 4, 5}]</span>
+<span class="sd">     &gt;&gt;&gt; {1, 3} in t</span>
+<span class="sd">     True</span>
+<span class="sd">     &gt;&gt;&gt; t.hassuperset( {1, 3} )</span>
+<span class="sd">     True</span>
+<span class="sd">     &gt;&gt;&gt; t.supersets( {1, 3} )</span>
+<span class="sd">     [{1, 2, 3}, {1, 3}]</span>
+<span class="sd">     &gt;&gt;&gt; t.subsets({1, 2, 3, 5})</span>
+<span class="sd">     [{1, 2, 3}, {1, 3}]</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SetTrie.Node"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.Node">[docs]</a>  <span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Node object used by SetTrie.&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">sortedcontainers</span><span class="o">.</span><span class="n">SortedList</span><span class="p">()</span> <span class="c"># child nodes a.k.a. children</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">flag_last</span> <span class="o">=</span> <span class="bp">False</span> <span class="c"># if True, this is the last element of a set in the set-trie</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="c"># use this to store user data (a set element). Must be a hashable (i.e. hash(data) should work) and comparable/orderable (i.e. data1 &lt; data2 should work; see https://wiki.python.org/moin/HowTo/Sorting/) type.</span>
+    
+    <span class="c"># comparison operators to support rich comparisons, sorting etc. using self.data as key</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&lt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+</div>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize this set-trie. If iterable is specified, set-trie is populated from its items.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">Node</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">iterable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+  
+<div class="viewcode-block" id="SetTrie.add"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.add">[docs]</a>  <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add set aset to the container.</span>
+<span class="sd">       aset must be a sortable and iterable container type.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)))</span>
+  </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_add</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">it</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.insert().</span>
+<span class="sd">       node is a SetTrieNode object</span>
+<span class="sd">       it is an iterator over a sorted set&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="c"># </span>
+      <span class="n">nextnode</span> <span class="o">=</span> <span class="bp">None</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">nextnode</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrie</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span> <span class="c"># find first child with this data</span>
+      <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> <span class="c"># not found</span>
+        <span class="n">nextnode</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c"># create new node</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">nextnode</span><span class="p">)</span> <span class="c"># add to children &amp; sort</span>
+      <span class="n">SetTrie</span><span class="o">.</span><span class="n">_add</span><span class="p">(</span><span class="n">nextnode</span><span class="p">,</span> <span class="n">it</span><span class="p">)</span> <span class="c"># recurse</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span> <span class="c"># end of set to add</span>
+      <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="o">=</span> <span class="bp">True</span>
+      
+<div class="viewcode-block" id="SetTrie.contains"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.contains">[docs]</a>  <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff this set-trie contains set aset.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contains</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)))</span>
+    </div>
+  <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff this set-trie contains set aset.</span>
+<span class="sd">       </span>
+<span class="sd">       This method definition allows the use of the &#39;in&#39; operator, for example:</span>
+<span class="sd">       &gt;&gt;&gt; t = SetTrie()</span>
+<span class="sd">       &gt;&gt;&gt; t.add( {1, 3} )</span>
+<span class="sd">       &gt;&gt;&gt; {1, 3} in t</span>
+<span class="sd">       True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">aset</span><span class="p">)</span>
+  
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_contains</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">it</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.contains().&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">matchnode</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrie</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span> <span class="c"># find first child with this data</span>
+        <span class="k">return</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_contains</span><span class="p">(</span><span class="n">matchnode</span><span class="p">,</span> <span class="n">it</span><span class="p">)</span> <span class="c"># recurse</span>
+      <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> <span class="c"># not found</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span>
+        
+<div class="viewcode-block" id="SetTrie.hassuperset"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.hassuperset">[docs]</a>  <span class="k">def</span> <span class="nf">hassuperset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff there is at least one set in this set-trie that is the superset of set aset.&quot;&quot;&quot;</span>
+    <span class="c"># TODO: if aset is not a set, convert it to a set first to collapse multiply existing elements</span>
+    <span class="k">return</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_hassuperset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+  </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_hassuperset</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by hassuperset().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span> <span class="c"># don&#39;t go to subtrees where current element cannot be</span>
+        <span class="k">break</span>
+      <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_hassuperset</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_hassuperset</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
+        <span class="k">break</span>
+    <span class="k">return</span> <span class="n">found</span>
+      
+<div class="viewcode-block" id="SetTrie.itersupersets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.itersupersets">[docs]</a>  <span class="k">def</span> <span class="nf">itersupersets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return an iterator over all sets in this set-trie that are (proper or not proper) supersets of set aset.&quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+</div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_itersupersets</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by itersupersets().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="ow">and</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">yield</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="c"># we still have elements of aset to find </span>
+      <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span> <span class="c"># don&#39;t go to subtrees where current element cannot be</span>
+          <span class="k">break</span>
+        <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+          <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span> <span class="c"># no more elements to find: just traverse this subtree to get all supersets</span>
+      <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+  
+<div class="viewcode-block" id="SetTrie.supersets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.supersets">[docs]</a>  <span class="k">def</span> <span class="nf">supersets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a list containing all sets in this set-trie that are supersets of set aset.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itersupersets</span><span class="p">(</span><span class="n">aset</span><span class="p">))</span> 
+  </div>
+<div class="viewcode-block" id="SetTrie.hassubset"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.hassubset">[docs]</a>  <span class="k">def</span> <span class="nf">hassubset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return True iff there is at least one set in this set-trie that is the (proper or not proper) subset of set aset.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_hassubset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+</div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_hassubset</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by hassubset().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">c</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrie</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+      <span class="n">found</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_hassubset</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+      <span class="k">pass</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_hassubset</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    
+<div class="viewcode-block" id="SetTrie.itersubsets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.itersubsets">[docs]</a>  <span class="k">def</span> <span class="nf">itersubsets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return an iterator over all sets in this set-trie that are (proper or not proper) subsets of set aset.&quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersubsets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+  </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_itersubsets</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by itersubsets().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span><span class="p">:</span>
+      <span class="k">yield</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">break</span>
+      <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+        <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersubsets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="c"># advance in search set until we find child (or get to the end, or get to an element &gt; child)</span>
+        <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;=</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+          <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+            <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_itersubsets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+            <span class="k">break</span>
+          <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>  
+
+<div class="viewcode-block" id="SetTrie.subsets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.subsets">[docs]</a>  <span class="k">def</span> <span class="nf">subsets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a list of sets in this set-trie that are (proper or not proper) subsets of set aset.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itersubsets</span><span class="p">(</span><span class="n">aset</span><span class="p">))</span>
+      </div>
+<div class="viewcode-block" id="SetTrie.iter"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.iter">[docs]</a>  <span class="k">def</span> <span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns an iterator over the sets stored in this set-trie (with pre-order tree traversal).</span>
+<span class="sd">       The sets are returned in sorted order with their elements sorted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__iter__</span><span class="p">()</span>
+</div>
+  <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns an iterator over the sets stored in this set-trie (with pre-order tree traversal).</span>
+<span class="sd">       The sets are returned in sorted order with their elements sorted.</span>
+<span class="sd">       </span>
+<span class="sd">       This method definition enables direct iteration over a SetTrie, for example:</span>
+<span class="sd">       &gt;&gt;&gt; t = SetTrie([{1, 2}, {2, 3, 4}])</span>
+<span class="sd">       &gt;&gt;&gt; for s in t:</span>
+<span class="sd">       &gt;&gt;&gt;   print(s)</span>
+<span class="sd">       {1, 2}</span>
+<span class="sd">       {2, 3, 4}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+  
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_iter</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.__iter__().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span><span class="p">:</span>
+      <span class="k">yield</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="k">yield from</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">_iter</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+  
+<div class="viewcode-block" id="SetTrie.aslist"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.aslist">[docs]</a>  <span class="k">def</span> <span class="nf">aslist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return an array containing all the sets stored in this set-trie.</span>
+<span class="sd">       The sets are in sorted order with their elements sorted.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SetTrie.printtree"><a class="viewcode-back" href="../settrie.html#settrie.SetTrie.printtree">[docs]</a>  <span class="k">def</span> <span class="nf">printtree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tabchr</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">tabsize</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print a mirrored 90-degree rotation of the nodes in this trie to stream (default: sys.stdout).</span>
+<span class="sd">       Nodes marked as flag_last are trailed by the &#39;#&#39; character.</span>
+<span class="sd">       tabchr and tabsize determine the indentation: at tree level n, n*tabsize tabchar characters will be used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_printtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">,</span> <span class="n">tabsize</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+    </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_printtree</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">,</span> <span class="n">tabsize</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by self.printTree(), recursive preorder traverse and printing of trie node&quot;&quot;&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">))</span><span class="o">+</span><span class="n">level</span><span class="o">*</span><span class="n">tabsize</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;#&#39;</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">),</span>
+          <span class="nb">file</span><span class="o">=</span><span class="n">stream</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="n">SetTrie</span><span class="o">.</span><span class="n">_printtree</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">,</span> <span class="n">tabsize</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns str(self.aslist()).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aslist</span><span class="p">())</span>
+  
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns str(self.aslist()).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aslist</span><span class="p">())</span>
+
+</div>
+<div class="viewcode-block" id="SetTrieMap"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap">[docs]</a><span class="k">class</span> <span class="nc">SetTrieMap</span><span class="p">:</span>
+  <span class="sd">&quot;&quot;&quot; Mapping container for efficient storage of key-value pairs where the keys are sets.</span>
+<span class="sd">      Uses efficient trie implementation. Supports querying for values associated to subsets or supersets</span>
+<span class="sd">      of stored key sets.</span>
+<span class="sd">      </span>
+<span class="sd">      Usage:</span>
+<span class="sd">      ------</span>
+<span class="sd">      &gt;&gt;&gt; from settrie import SetTrieMap</span>
+<span class="sd">      &gt;&gt;&gt; m.assign({1,2}, &#39;A&#39;)</span>
+<span class="sd">      &gt;&gt;&gt; m.assign({1,2,3}, &#39;B&#39;)</span>
+<span class="sd">      &gt;&gt;&gt; m.assign({2,3,5}, &#39;C&#39;)</span>
+<span class="sd">      &gt;&gt;&gt; m</span>
+<span class="sd">      [({1, 2}, &#39;A&#39;), ({1, 2, 3}, &#39;B&#39;), ({2, 3, 5}, &#39;C&#39;)]</span>
+<span class="sd">      &gt;&gt;&gt; m.get( {1,2,3} )</span>
+<span class="sd">      &#39;B&#39;</span>
+<span class="sd">      &gt;&gt;&gt; m.get( {1, 2, 3, 4}, &#39;Nope!&#39;)</span>
+<span class="sd">      &#39;Nope!&#39;</span>
+<span class="sd">      &gt;&gt;&gt; list(m.keys())</span>
+<span class="sd">      [{1, 2}, {1, 2, 3}, {2, 3, 5}]</span>
+<span class="sd">      &gt;&gt;&gt; m.supersets( {1,2} )</span>
+<span class="sd">      [({1, 2}, &#39;A&#39;), ({1, 2, 3}, &#39;B&#39;)]</span>
+<span class="sd">      &gt;&gt;&gt; m.supersets({1, 2}, mode=&#39;keys&#39;)</span>
+<span class="sd">      [{1, 2}, {1, 2, 3}]</span>
+<span class="sd">      &gt;&gt;&gt; m.supersets({1, 2}, mode=&#39;values&#39;)</span>
+<span class="sd">      [&#39;A&#39;, &#39;B&#39;]</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SetTrieMap.Node"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.Node">[docs]</a>  <span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Node object used by SetTrieMap. You probably don&#39;t need to use it from the outside.&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">sortedcontainers</span><span class="o">.</span><span class="n">SortedList</span><span class="p">()</span> <span class="c"># child nodes a.k.a. children</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">flag_last</span> <span class="o">=</span> <span class="bp">False</span> <span class="c"># if True, this is the last element of a key set</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="c"># store a member element of the key set. Must be a hashable (i.e. hash(data) should work) and comparable/orderable (i.e. data1 &lt; data2 should work; see https://wiki.python.org/moin/HowTo/Sorting/) type.</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># the value associated to the key set if flag_last == True, otherwise None</span>
+    
+    <span class="c"># comparison operators to support rich comparisons, sorting etc. using self.data as key</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&lt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">def</span> <span class="nf">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+</div>
+  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set up this SetTrieMap object. </span>
+<span class="sd">       If iterable is specified, it must be an iterable of (keyset, values) pairs</span>
+<span class="sd">       from which set-trie is populated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="o">.</span><span class="n">Node</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">iterable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+  
+<div class="viewcode-block" id="SetTrieMap.assign"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.assign">[docs]</a>  <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">akey</span><span class="p">,</span> <span class="n">avalue</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add key akey with associated value avalue to the container.</span>
+<span class="sd">       akey must be a sortable and iterable container type.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">akey</span><span class="p">)),</span> <span class="n">avalue</span><span class="p">)</span>
+  </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_assign</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">it</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.assign().</span>
+<span class="sd">       node is a SetTrieNode object</span>
+<span class="sd">       it is an iterator over a sorted key set, val is a value object.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+      <span class="n">nextnode</span> <span class="o">=</span> <span class="bp">None</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">nextnode</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrieMap</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span> <span class="c"># find first child with this data</span>
+      <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> <span class="c"># not found</span>
+        <span class="n">nextnode</span> <span class="o">=</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c"># create new node</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">nextnode</span><span class="p">)</span> <span class="c"># add to children &amp; sort</span>
+      <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_assign</span><span class="p">(</span><span class="n">nextnode</span><span class="p">,</span> <span class="n">it</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="c"># recurse</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span> <span class="c"># end of set to add</span>
+      <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="o">=</span> <span class="bp">True</span>
+      <span class="n">node</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">val</span>
+      
+<div class="viewcode-block" id="SetTrieMap.contains"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.contains">[docs]</a>  <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff this set-trie contains set keyset as a key.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contains</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">keyset</span><span class="p">)))</span>
+    </div>
+  <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff this set-trie contains set keyset as a key.</span>
+<span class="sd">       This method definition allows the use of the &#39;in&#39; operator, for example:</span>
+<span class="sd">       &gt;&gt;&gt; t = SetTrieMap()</span>
+<span class="sd">       &gt;&gt;&gt; t.assign( {1, 3}, &#39;M&#39; )</span>
+<span class="sd">       &gt;&gt;&gt; {1, 3} in t</span>
+<span class="sd">       True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">keyset</span><span class="p">)</span>
+  
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_contains</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">it</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.contains().&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">matchnode</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrieMap</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span> <span class="c"># find first child with this data</span>
+        <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_contains</span><span class="p">(</span><span class="n">matchnode</span><span class="p">,</span> <span class="n">it</span><span class="p">)</span> <span class="c"># recurse</span>
+      <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> <span class="c"># not found</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span>
+  
+<div class="viewcode-block" id="SetTrieMap.get"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.get">[docs]</a>  <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyset</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the value associated to keyset if keyset is in this SetTrieMap, else default.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">keyset</span><span class="p">)),</span> <span class="n">default</span><span class="p">)</span>
+</div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">it</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.get().&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+      <span class="k">try</span><span class="p">:</span>
+        <span class="n">matchnode</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrieMap</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span> <span class="c"># find first child with this data</span>
+        <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">matchnode</span><span class="p">,</span> <span class="n">it</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span> <span class="c"># recurse</span>
+      <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span> <span class="c"># not found</span>
+        <span class="k">return</span> <span class="n">default</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+      <span class="k">return</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="k">else</span> <span class="n">default</span><span class="p">)</span>
+  
+<div class="viewcode-block" id="SetTrieMap.hassuperset"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.hassuperset">[docs]</a>  <span class="k">def</span> <span class="nf">hassuperset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff there is at least one key set in this SetTrieMap that is the superset of set aset.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_hassuperset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+  </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_hassuperset</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by hassuperset().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span> <span class="c"># don&#39;t go to subtrees where current element cannot be</span>
+        <span class="k">break</span>
+      <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_hassuperset</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_hassuperset</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
+        <span class="k">break</span>
+    <span class="k">return</span> <span class="n">found</span>
+    
+<div class="viewcode-block" id="SetTrieMap.itersupersets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.itersupersets">[docs]</a>  <span class="k">def</span> <span class="nf">itersupersets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return an iterator over all (keyset, value) pairs from this SetTrieMap </span>
+<span class="sd">       for which set keyset is a superset (proper or not proper) of set aset.</span>
+<span class="sd">       If mode is not None, the following values are allowed:</span>
+<span class="sd">       mode=&#39;keys&#39;: return an iterator over only the keysets that are supersets of aset is returned</span>
+<span class="sd">       mode=&#39;values&#39;: return an iterator over only the values that are associated to keysets that are supersets of aset</span>
+<span class="sd">       If mode is neither of &#39;keys&#39;, &#39;values&#39; or None, behavior is equivalent to mode=None.</span>
+<span class="sd">       &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_itersupersets</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by itersupersets().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="ow">and</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;keys&#39;</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;values&#39;</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="c"># we still have elements of aset to find </span>
+      <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span> <span class="c"># don&#39;t go to subtrees where current element cannot be</span>
+          <span class="k">break</span>
+        <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+          <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span> <span class="c"># no more elements to find: just traverse this subtree to get all supersets</span>
+      <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersupersets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SetTrieMap.supersets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.supersets">[docs]</a>  <span class="k">def</span> <span class="nf">supersets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a list containing pairs of (keyset, value) for which keyset is superset of set aset.</span>
+<span class="sd">       Parameter mode: see documentation for itersupersets().</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itersupersets</span><span class="p">(</span><span class="n">aset</span><span class="p">,</span> <span class="n">mode</span><span class="p">))</span> 
+</div>
+<div class="viewcode-block" id="SetTrieMap.hassubset"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.hassubset">[docs]</a>  <span class="k">def</span> <span class="nf">hassubset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return True iff there is at least one set in this SetTrieMap that is the (proper or not proper) subset of set aset.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_hassubset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+</div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_hassubset</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by hassubset().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">False</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">try</span><span class="p">:</span>
+      <span class="n">c</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">SetTrieMap</span><span class="o">.</span><span class="n">Node</span><span class="p">(</span><span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+      <span class="n">found</span> <span class="o">=</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_hassubset</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+      <span class="k">pass</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_hassubset</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">return</span> <span class="bp">True</span>
+      
+<div class="viewcode-block" id="SetTrieMap.itersubsets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.itersubsets">[docs]</a>  <span class="k">def</span> <span class="nf">itersubsets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return an iterator over pairs (keyset, value) from this SetTrieMap </span>
+<span class="sd">       for which keyset is (proper or not proper) subset of set aset.</span>
+<span class="sd">       If mode is not None, the following values are allowed:</span>
+<span class="sd">       mode=&#39;keys&#39;: return an iterator over only the keysets that are subsets of aset is returned</span>
+<span class="sd">       mode=&#39;values&#39;: return an iterator over only the values that are associated to keysets that are subsets of aset    </span>
+<span class="sd">       If mode is neither of &#39;keys&#39;, &#39;values&#39; or None, behavior is equivalent to mode=None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersubsets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">aset</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+  </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_itersubsets</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by itersubsets().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;keys&#39;</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;values&#39;</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">break</span>
+      <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+        <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersubsets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="c"># advance in search set until we find child (or get to the end, or get to an element &gt; child)</span>
+        <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">setarr</span><span class="p">)</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">&gt;=</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+          <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">setarr</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+            <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_itersubsets</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">setarr</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+            <span class="k">break</span>
+          <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>  
+
+<div class="viewcode-block" id="SetTrieMap.subsets"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.subsets">[docs]</a>  <span class="k">def</span> <span class="nf">subsets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aset</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a list of (keyset, value) pairs from this set-trie</span>
+<span class="sd">       for which keyset is (proper or not proper) subset of set aset.</span>
+<span class="sd">       Parameter mode: see documentation for itersubsets().</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itersubsets</span><span class="p">(</span><span class="n">aset</span><span class="p">,</span> <span class="n">mode</span><span class="p">))</span>
+      </div>
+<div class="viewcode-block" id="SetTrieMap.iter"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.iter">[docs]</a>  <span class="k">def</span> <span class="nf">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns an iterator to all (keyset, value) pairs stored in this SetTrieMap (using pre-order tree traversal).</span>
+<span class="sd">       The pairs are returned sorted to their keys, which are also sorted.</span>
+<span class="sd">       If mode is not None, the following values are allowed:</span>
+<span class="sd">       mode=&#39;keys&#39;: return an iterator over only the keysets that are subsets of aset</span>
+<span class="sd">       mode=&#39;values&#39;: return an iterator over only the values that are associated to keysets that are subsets of aset</span>
+<span class="sd">       If mode is neither of &#39;keys&#39;, &#39;values&#39; or None, behavior is equivalent to mode=None.     </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SetTrieMap.keys"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.keys">[docs]</a>  <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Alias for self.iter(mode=&#39;keys&#39;).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;keys&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SetTrieMap.values"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.values">[docs]</a>  <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Alias for self.iter(mode=&#39;values&#39;).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;values&#39;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="SetTrieMap.items"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.items">[docs]</a>  <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Alias for self.iter(mode=None).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</div>
+  <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Same as self.iter(mode=&#39;keys&#39;).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> 
+   
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_iter</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Recursive function used by self.iter().&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;keys&#39;</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+      <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;values&#39;</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="k">yield from</span> <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_iter</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+      <span class="n">path</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+  
+<div class="viewcode-block" id="SetTrieMap.aslist"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.aslist">[docs]</a>  <span class="k">def</span> <span class="nf">aslist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a list containing all the (keyset, value) pairs stored in this SetTrieMap.</span>
+<span class="sd">       The pairs are returned sorted to their keys, which are also sorted.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter</span><span class="p">())</span>
+</div>
+<div class="viewcode-block" id="SetTrieMap.printtree"><a class="viewcode-back" href="../settrie.html#settrie.SetTrieMap.printtree">[docs]</a>  <span class="k">def</span> <span class="nf">printtree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tabchr</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">tabsize</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print a mirrored 90-degree rotation of the nodes in this SetTrieMap to stream (default: sys.stdout).</span>
+<span class="sd">       Nodes marked as flag_last are trailed by the &#39;#&#39; character.</span>
+<span class="sd">       tabchr and tabsize determine the indentation: at tree level n, n*tabsize tabchar characters will be used.</span>
+<span class="sd">       Associated values are printed after &#39;: &#39; trailing flag_last=True nodes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_printtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">,</span> <span class="n">tabsize</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+    </div>
+  <span class="nd">@staticmethod</span>
+  <span class="k">def</span> <span class="nf">_printtree</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">,</span> <span class="n">tabsize</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used by self.printTree(), recursive preorder traverse and printing of trie node&quot;&quot;&quot;</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">rjust</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">))</span><span class="o">+</span><span class="n">level</span><span class="o">*</span><span class="n">tabsize</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">))</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">flag_last</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">),</span>
+          <span class="nb">file</span><span class="o">=</span><span class="n">stream</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+      <span class="n">SetTrieMap</span><span class="o">.</span><span class="n">_printtree</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">tabchr</span><span class="p">,</span> <span class="n">tabsize</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns str(self.aslist()).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aslist</span><span class="p">())</span>
+  
+  <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns str(self.aslist()).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aslist</span><span class="p">())</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">pysettrie  documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Marton Mihaltz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

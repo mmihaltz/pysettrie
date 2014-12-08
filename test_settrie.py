@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# coding: utf8
 """
 Unit tests for module PySetTrie (see settrie.py).
 

@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>settrie Module &mdash; pysettrie  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pysettrie  documentation" href="index.html" />
+    <link rel="prev" title="Welcome to pysettrie’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pysettrie’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pysettrie  documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-settrie">
+<span id="settrie-module"></span><h1>settrie Module<a class="headerlink" href="#module-settrie" title="Permalink to this headline">¶</a></h1>
+<p>Module settrie</p>
+<p>Requires Python3</p>
+<p>Version 1.0</p>
+<p>Release date: 2014-12-06</p>
+<p>Author: Márton Miháltz 
+<a class="reference external" href="https://sites.google.com/site/mmihaltz/">https://sites.google.com/site/mmihaltz/</a></p>
+<p>Settrie is a pure-python module that provides support for efficient storage and querying of sets of sets using the trie data structure,
+supporting operations like finding all the supersets/subsets of a given set from a collection of sets.</p>
+<p>The following classes are included:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#settrie.SetTrie" title="settrie.SetTrie"><tt class="xref py py-class docutils literal"><span class="pre">SetTrie</span></tt></a>: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations.</li>
+<li><a class="reference internal" href="#settrie.SetTrieMap" title="settrie.SetTrieMap"><tt class="xref py py-class docutils literal"><span class="pre">SetTrieMap</span></tt></a>: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.</li>
+</ul>
+<p>This module depends on the sortedcollection module (<a class="reference external" href="http://grantjenks.com/docs/sortedcontainers/">http://grantjenks.com/docs/sortedcontainers/</a>).
+One recommended way to install (tested on Ubuntu):</p>
+<div class="highlight-python"><pre>sudo pip3 install sortedcontainers</pre>
+</div>
+<p>If you don&#8217;t have pip3:</p>
+<div class="highlight-python"><pre>sudo apt-get install python3-setuptools
+sudo easy_install3 pip</pre>
+</div>
+<p>For more information see README.md.</p>
+<p>Licensed under the GNU LESSER GENERAL PUBLIC LICENSE, Version 3.
+See <a class="reference external" href="https://www.gnu.org/licenses/lgpl.html">https://www.gnu.org/licenses/lgpl.html</a></p>
+<dl class="class">
+<dt id="settrie.SetTrie">
+<em class="property">class </em><tt class="descclassname">settrie.</tt><tt class="descname">SetTrie</tt><big>(</big><em>iterable=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<p>Set-trie container of sets for efficient supersets/subsets of a set over a set of sets queries.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">settrie</span> <span class="kn">import</span> <span class="n">SetTrie</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">SetTrie</span><span class="p">(</span> <span class="p">[{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">},</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">}]</span> <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">add</span><span class="p">(</span> <span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">}</span> <span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span>
+<span class="go">[{1, 2, 3}, {1, 3}, {3, 4, 5}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span> <span class="ow">in</span> <span class="n">t</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">hassuperset</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span> <span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">supersets</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">}</span> <span class="p">)</span>
+<span class="go">[{1, 2, 3}, {1, 3}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span><span class="o">.</span><span class="n">subsets</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">})</span>
+<span class="go">[{1, 2, 3}, {1, 3}]</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="settrie.SetTrie.Node">
+<em class="property">class </em><tt class="descname">Node</tt><big>(</big><em>data=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<p>Node object used by SetTrie.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.add">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">add</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add set aset to the container.
+aset must be a sortable and iterable container type.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.aslist">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">aslist</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.aslist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.aslist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an array containing all the sets stored in this set-trie.
+The sets are in sorted order with their elements sorted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.contains">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">contains</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff this set-trie contains set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.hassubset">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">hassubset</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.hassubset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.hassubset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff there is at least one set in this set-trie that is the (proper or not proper) subset of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.hassuperset">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">hassuperset</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.hassuperset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.hassuperset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff there is at least one set in this set-trie that is the superset of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.iter">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">iter</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator over the sets stored in this set-trie (with pre-order tree traversal).
+The sets are returned in sorted order with their elements sorted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.itersubsets">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">itersubsets</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.itersubsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.itersubsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over all sets in this set-trie that are (proper or not proper) subsets of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.itersupersets">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">itersupersets</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.itersupersets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.itersupersets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over all sets in this set-trie that are (proper or not proper) supersets of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.printtree">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">printtree</tt><big>(</big><em>tabchr=' '</em>, <em>tabsize=2</em>, <em>stream=&lt;_io.TextIOWrapper name='&lt;stdout&gt;' mode='w' encoding='UTF-8'&gt;</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.printtree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.printtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a mirrored 90-degree rotation of the nodes in this trie to stream (default: sys.stdout).
+Nodes marked as flag_last are trailed by the &#8216;#&#8217; character.
+tabchr and tabsize determine the indentation: at tree level n, n*tabsize tabchar characters will be used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.subsets">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">subsets</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.subsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.subsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of sets in this set-trie that are (proper or not proper) subsets of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrie.supersets">
+<tt class="descclassname">SetTrie.</tt><tt class="descname">supersets</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrie.supersets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrie.supersets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list containing all sets in this set-trie that are supersets of set aset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="settrie.SetTrieMap">
+<em class="property">class </em><tt class="descclassname">settrie.</tt><tt class="descname">SetTrieMap</tt><big>(</big><em>iterable=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<p>Mapping container for efficient storage of key-value pairs where the keys are sets.
+Uses efficient trie implementation. Supports querying for values associated to subsets or supersets
+of stored key sets.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">settrie</span> <span class="kn">import</span> <span class="n">SetTrieMap</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">},</span> <span class="s">&#39;A&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">},</span> <span class="s">&#39;B&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">},</span> <span class="s">&#39;C&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span>
+<span class="go">[({1, 2}, &#39;A&#39;), ({1, 2, 3}, &#39;B&#39;), ({2, 3, 5}, &#39;C&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span> <span class="p">)</span>
+<span class="go">&#39;B&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">},</span> <span class="s">&#39;Nope!&#39;</span><span class="p">)</span>
+<span class="go">&#39;Nope!&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="go">[{1, 2}, {1, 2, 3}, {2, 3, 5}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">supersets</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">}</span> <span class="p">)</span>
+<span class="go">[({1, 2}, &#39;A&#39;), ({1, 2, 3}, &#39;B&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">supersets</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">},</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;keys&#39;</span><span class="p">)</span>
+<span class="go">[{1, 2}, {1, 2, 3}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">supersets</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">},</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;values&#39;</span><span class="p">)</span>
+<span class="go">[&#39;A&#39;, &#39;B&#39;]</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="settrie.SetTrieMap.Node">
+<em class="property">class </em><tt class="descname">Node</tt><big>(</big><em>data=None</em>, <em>value=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.Node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<p>Node object used by SetTrieMap. You probably don&#8217;t need to use it from the outside.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.aslist">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">aslist</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.aslist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.aslist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list containing all the (keyset, value) pairs stored in this SetTrieMap.
+The pairs are returned sorted to their keys, which are also sorted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.assign">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">assign</tt><big>(</big><em>akey</em>, <em>avalue</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.assign"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.assign" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add key akey with associated value avalue to the container.
+akey must be a sortable and iterable container type.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.contains">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">contains</tt><big>(</big><em>keyset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff this set-trie contains set keyset as a key.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.get">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">get</tt><big>(</big><em>keyset</em>, <em>default=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the value associated to keyset if keyset is in this SetTrieMap, else default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.hassubset">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">hassubset</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.hassubset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.hassubset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff there is at least one set in this SetTrieMap that is the (proper or not proper) subset of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.hassuperset">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">hassuperset</tt><big>(</big><em>aset</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.hassuperset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.hassuperset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff there is at least one key set in this SetTrieMap that is the superset of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.items">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">items</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for self.iter(mode=None).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.iter">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">iter</tt><big>(</big><em>mode=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.iter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator to all (keyset, value) pairs stored in this SetTrieMap (using pre-order tree traversal).
+The pairs are returned sorted to their keys, which are also sorted.
+If mode is not None, the following values are allowed:
+mode=&#8217;keys&#8217;: return an iterator over only the keysets that are subsets of aset
+mode=&#8217;values&#8217;: return an iterator over only the values that are associated to keysets that are subsets of aset
+If mode is neither of &#8216;keys&#8217;, &#8216;values&#8217; or None, behavior is equivalent to mode=None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.itersubsets">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">itersubsets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.itersubsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.itersubsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over pairs (keyset, value) from this SetTrieMap 
+for which keyset is (proper or not proper) subset of set aset.
+If mode is not None, the following values are allowed:
+mode=&#8217;keys&#8217;: return an iterator over only the keysets that are subsets of aset is returned
+mode=&#8217;values&#8217;: return an iterator over only the values that are associated to keysets that are subsets of aset    
+If mode is neither of &#8216;keys&#8217;, &#8216;values&#8217; or None, behavior is equivalent to mode=None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.itersupersets">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">itersupersets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.itersupersets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.itersupersets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over all (keyset, value) pairs from this SetTrieMap 
+for which set keyset is a superset (proper or not proper) of set aset.
+If mode is not None, the following values are allowed:
+mode=&#8217;keys&#8217;: return an iterator over only the keysets that are supersets of aset is returned
+mode=&#8217;values&#8217;: return an iterator over only the values that are associated to keysets that are supersets of aset
+If mode is neither of &#8216;keys&#8217;, &#8216;values&#8217; or None, behavior is equivalent to mode=None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.keys">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">keys</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for self.iter(mode=&#8217;keys&#8217;).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.printtree">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">printtree</tt><big>(</big><em>tabchr=' '</em>, <em>tabsize=2</em>, <em>stream=&lt;_io.TextIOWrapper name='&lt;stdout&gt;' mode='w' encoding='UTF-8'&gt;</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.printtree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.printtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a mirrored 90-degree rotation of the nodes in this SetTrieMap to stream (default: sys.stdout).
+Nodes marked as flag_last are trailed by the &#8216;#&#8217; character.
+tabchr and tabsize determine the indentation: at tree level n, n*tabsize tabchar characters will be used.
+Associated values are printed after &#8216;: &#8216; trailing flag_last=True nodes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.subsets">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">subsets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.subsets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.subsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of (keyset, value) pairs from this set-trie
+for which keyset is (proper or not proper) subset of set aset.
+Parameter mode: see documentation for itersubsets().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.supersets">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">supersets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.supersets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.supersets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list containing pairs of (keyset, value) for which keyset is superset of set aset.
+Parameter mode: see documentation for itersupersets().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMap.values">
+<tt class="descclassname">SetTrieMap.</tt><tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for self.iter(mode=&#8217;values&#8217;).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to pysettrie&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/settrie.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pysettrie’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">pysettrie  documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Marton Mihaltz.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
