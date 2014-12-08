@@ -11,7 +11,7 @@ The following classes are included:
 - SetTrie: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations. 
 - SetTrieMap: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.
 
-For further documentation, please see [documentation](docs/build/html/index.html)
+For further information, please see [documentation](docs/build/html/index.html)
 
 Module test_settrie.py contains unittests for SetTrie and SetTrieMap classes.
 
