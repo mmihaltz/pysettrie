@@ -5,9 +5,9 @@ Module settrie
 
 Requires Python3
 
-Version 1.0
+Version 1.1
 
-Release date: 2014-12-06
+Release date: 2014-12-11
 
 Author: Márton Miháltz 
 https://sites.google.com/site/mmihaltz/
@@ -19,6 +19,7 @@ The following classes are included:
 
 * :py:class:`SetTrie`: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations.
 * :py:class:`SetTrieMap`: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.
+* :py:class:`SetTrieMultiMap`: like SetTrieMap, but supports multiple values associated to each key.
 
 This module depends on the sortedcollection module (http://grantjenks.com/docs/sortedcontainers/).
 One recommended way to install (tested on Ubuntu)::
@@ -347,10 +348,10 @@ class SetTrieMap:
 
   def __init__(self, iterable=None):
     """Set up this SetTrieMap object. 
-       If iterable is specified, it must be an iterable of (keyset, values) pairs
+       If iterable is specified, it must be an iterable of (keyset, value) pairs
        from which set-trie is populated.
     """
-    self.root = SetTrie.Node()
+    self.root = SetTrieMap.Node()
     if iterable is not None:
       for key, value in iterable:
         self.assign(key, value)
@@ -362,9 +363,7 @@ class SetTrieMap:
   
   @staticmethod
   def _assign(node, it, val):
-    """Recursive function used by self.assign().
-       node is a SetTrieNode object
-       it is an iterator over a sorted key set, val is a value object."""
+    """Recursive function used by self.assign()."""
     try:
       data = next(it)
       nextnode = None
@@ -595,6 +594,359 @@ class SetTrieMap:
         yield (set(path), node.value)
     for child in node.children:
       yield from SetTrieMap._iter(child, path, mode)
+    if node.data is not None:
+      path.pop()
+  
+  def aslist(self):
+    """Return a list containing all the (keyset, value) pairs stored in this SetTrieMap.
+       The pairs are returned sorted to their keys, which are also sorted."""
+    return list(self.iter())
+
+  def printtree(self, tabchr=' ', tabsize=2, stream=sys.stdout):
+    """Print a mirrored 90-degree rotation of the nodes in this SetTrieMap to stream (default: sys.stdout).
+       Nodes marked as flag_last are trailed by the '#' character.
+       tabchr and tabsize determine the indentation: at tree level n, n*tabsize tabchar characters will be used.
+       Associated values are printed after ': ' trailing flag_last=True nodes.
+    """
+    self._printtree(self.root, 0, tabchr, tabsize, stream)
+    
+  @staticmethod
+  def _printtree(node, level, tabchr, tabsize, stream):
+    """Used by self.printTree(), recursive preorder traverse and printing of trie node"""
+    print(str(node.data).rjust(len(repr(node.data))+level*tabsize, tabchr) + (': {}'.format(repr(node.value)) if node.flag_last else ''),
+          file=stream)
+    for child in node.children:
+      SetTrieMap._printtree(child, level+1, tabchr, tabsize, stream)
+
+  def __str__(self):
+    """Returns str(self.aslist())."""
+    return str(self.aslist())
+  
+  def __repr__(self):
+    """Returns str(self.aslist())."""
+    return str(self.aslist())
+
+
+class SetTrieMultiMap:
+  """ TODO doc
+  
+      Mapping container for efficient storage of key-value pairs where the keys are sets.
+      Uses efficient trie implementation. Supports querying for values associated to subsets or supersets
+      of stored key sets.
+      
+      Usage:
+      ------
+      >>> from settrie import SetTrieMap
+      >>> m.assign({1,2}, 'A')
+      >>> m.assign({1,2,3}, 'B')
+      >>> m.assign({1,2,3}, 'BB')
+      >>> m.assign({2,3,5}, 'C')
+      >>> m
+      [({1, 2}, 'A'), ({1, 2, 3}, 'B'), ({1, 2, 3}, 'BB'), ({2, 3, 5}, 'C')]
+      >>> m.get( {1,2,3} )
+      ['B', 'BB']
+      >>> m.get( {1, 2, 3, 4}, 'Nope!')
+      'Nope!'
+      >>> list(m.keys())
+      [{1, 2}, {1, 2, 3}, {2, 3, 5}]
+      >>> m.supersets( {1,2} )
+      [({1, 2}, 'A'), ({1, 2, 3}, 'B'), ({1, 2, 3}, 'BB')]
+      >>> m.supersets({1, 2}, mode='keys')
+      [{1, 2}, {1, 2, 3}]
+      >>> m.supersets({1, 2}, mode='values')
+      ['A', 'B', 'BB']
+  """
+
+  class Node:
+    """Node object used by SetTrieMultiMap. You probably don't need to use it from the outside."""
+    
+    def __init__(self, data=None, value=None):
+      self.children = sortedcontainers.SortedList() # child nodes a.k.a. children
+      self.flag_last = False # if True, this is the last element of a key set
+      self.data = data # store a member element of the key set. Must be a hashable (i.e. hash(data) should work) and comparable/orderable (i.e. data1 < data2 should work; see https://wiki.python.org/moin/HowTo/Sorting/) type.
+      self.value = None # the list of values associated to the key set if flag_last == True, otherwise None
+    
+    # comparison operators to support rich comparisons, sorting etc. using self.data as key
+    def __eq__(self, other): return self.data == other.data
+    def __ne__(self, other): return self.data != other.data
+    def __lt__(self, other): return self.data < other.data
+    def __le__(self, other): return self.data <= other.data
+    def __gt__(self, other): return self.data > other.data
+    def __ge__(self, other): return self.data >= other.data
+
+  def __init__(self, iterable=None):
+    """Set up this SetTrieMultiMap object. 
+       If iterable is specified, it must be an iterable of (keyset, value) pairs
+       from which set-trie is populated; key may be repeated, all associated values will be stored.
+    """
+    self.root = SetTrieMultiMap.Node()
+    if iterable is not None:
+      for key, value in iterable:
+        self.assign(key, value)
+  
+  def assign(self, akey, avalue):
+    """Add key akey with associated value avalue to the container.
+       akey must be a sortable and iterable container type.
+       If akey is an already exising key, avalue will be appended to the associated values.
+       Multiple occurences of the same value for the same key are preserved."""
+    self._assign(self.root, iter(sorted(akey)), avalue)
+  
+  @staticmethod
+  def _assign(node, it, val):
+    """Recursive function used by self.assign()."""
+    try:
+      data = next(it)
+      nextnode = None
+      try:
+        nextnode = node.children[node.children.index(SetTrieMultiMap.Node(data))] # find first child with this data
+      except ValueError: # not found
+        nextnode = SetTrieMultiMap.Node(data) # create new node
+        node.children.add(nextnode) # add to children & sort
+      SetTrieMultiMap._assign(nextnode, it, val) # recurse
+    except StopIteration: # end of set to add
+      node.flag_last = True
+      if node.value is None:
+        node.value = []
+      node.value.append(val)
+
+  def contains(self, keyset):
+    """Returns True iff this set-trie contains set keyset as a key."""
+    return self._contains(self.root, iter(sorted(keyset)))
+    
+  def __contains__(self, keyset):
+    """Returns True iff this set-trie contains set keyset as a key.
+       This method definition allows the use of the 'in' operator, for example:
+       >>> t = SetTrieMap()
+       >>> t.assign( {1, 3}, 'M' )
+       >>> {1, 3} in t
+       True
+    """
+    return self.contains(keyset)
+  
+  @staticmethod
+  def _contains(node, it):
+    """Recursive function used by self.contains()."""
+    try:
+      data = next(it)
+      try:
+        matchnode = node.children[node.children.index(SetTrieMultiMap.Node(data))] # find first child with this data
+        return SetTrieMap._contains(matchnode, it) # recurse
+      except ValueError: # not found
+        return False
+    except StopIteration:
+      return node.flag_last
+  
+  def count(self, keyset):
+    """Returns the number of values associated to keyset. If keyset is unknown, returns 0."""
+    return self._count(self.root, iter(sorted(keyset)))
+
+  @staticmethod
+  def _count(node, it):
+    """Recursive function used by self.count()."""
+    try:
+      data = next(it)
+      try:
+        matchnode = node.children[node.children.index(SetTrieMultiMap.Node(data))] # find first child with this data
+        return SetTrieMultiMap._count(matchnode, it) # recurse
+      except ValueError: # not found
+        return 0
+    except StopIteration:
+      if node.flag_last and node.value is not None:
+        return len(node.value)
+      else:
+        return 0  
+  
+  def iterget(self, keyset):
+    """Return an iterator to the values associated to keyset."""
+    return self._iterget(self.root, iter(sorted(keyset)))
+
+  @staticmethod
+  def _iterget(node, it):
+    """Recursive function used by self.get()."""
+    try:
+      data = next(it)
+      try:
+        matchnode = node.children[node.children.index(SetTrieMultiMap.Node(data))] # find first child with this data
+        yield from SetTrieMultiMap._iterget(matchnode, it) # recurse
+      except ValueError: # not found
+        return None
+    except StopIteration:
+      if node.flag_last:
+        yield from node.value
+
+  def get(self, keyset, default=None):
+    """Return a list of values associated to keyset if keyset is in this SetTrieMultiMap, else default."""
+    return self._get(self.root, iter(sorted(keyset)), default)
+
+  @staticmethod
+  def _get(node, it, default):
+    """Recursive function used by self.get()."""
+    try:
+      data = next(it)
+      try:
+        matchnode = node.children[node.children.index(SetTrieMultiMap.Node(data))] # find first child with this data
+        return SetTrieMultiMap._get(matchnode, it, default) # recurse
+      except ValueError: # not found
+        return default
+    except StopIteration:
+      return (node.value if node.flag_last else default)
+
+  def hassuperset(self, aset):
+    """Returns True iff there is at least one key set in this SetTrieMultiMap that is the superset of set aset."""
+    return SetTrieMap._hassuperset(self.root, list(sorted(aset)), 0)
+    
+  def itersupersets(self, aset, mode=None):
+    """Return an iterator over all (keyset, value) pairs from this SetTrieMultiMap 
+       for which set keyset is a superset (proper or not proper) of set aset.
+       If mode is not None, the following values are allowed:
+       mode='keys': return an iterator over only the keysets that are supersets of aset is returned
+       mode='values': return an iterator over only the values that are associated to keysets that are supersets of aset
+       If mode is neither of 'keys', 'values' or None, behavior is equivalent to mode=None.
+       """
+    path = []
+    return SetTrieMultiMap._itersupersets(self.root, list(sorted(aset)), 0, path, mode)
+
+  @staticmethod
+  def _itersupersets(node, setarr, idx, path, mode):
+    """Used by itersupersets()."""
+    if node.data is not None:
+      path.append(node.data)
+    if node.flag_last and idx > len(setarr) - 1:
+      if mode == 'keys':
+        yield set(path)
+      elif mode == 'values':
+        yield from node.value
+      else:
+        yield from [(set(path), val) for val in node.value]
+    if idx <= len(setarr) -1: # we still have elements of aset to find 
+      for child in node.children:
+        if child.data > setarr[idx]: # don't go to subtrees where current element cannot be
+          break
+        if child.data == setarr[idx]:
+          yield from SetTrieMultiMap._itersupersets(child, setarr, idx+1, path, mode)
+        else:
+          yield from SetTrieMultiMap._itersupersets(child, setarr, idx, path, mode)
+    else: # no more elements to find: just traverse this subtree to get all supersets
+      for child in node.children:
+        yield from SetTrieMultiMap._itersupersets(child, setarr, idx, path, mode)
+    if node.data is not None:
+      path.pop()
+
+  def supersets(self, aset, mode=None):
+    """Return a list containing pairs of (keyset, value) for which keyset is superset of set aset.
+       Parameter mode: see documentation for itersupersets().
+    """
+    return list(self.itersupersets(aset, mode)) 
+
+  def hassubset(self, aset):
+    """Return True iff there is at least one set in this SetTrieMultiMap that is the (proper or not proper) subset of set aset."""
+    return SetTrieMultiMap._hassubset(self.root, list(sorted(aset)), 0)
+
+  @staticmethod
+  def _hassubset(node, setarr, idx):
+    """Used by hassubset()."""
+    if node.flag_last:
+      return True
+    if idx > len(setarr) - 1:
+      return False
+    found = False
+    try:
+      c = node.children.index(SetTrieMultiMap.Node(setarr[idx]))
+      found = SetTrieMultiMap._hassubset(node.children[c], setarr, idx+1)
+    except ValueError:
+      pass
+    if not found:
+      return SetTrieMultiMap._hassubset(node, setarr, idx+1)
+    else:
+      return True
+      
+  def itersubsets(self, aset, mode=None):
+    """Return an iterator over pairs (keyset, value) from this SetTrieMultiMap 
+       for which keyset is (proper or not proper) subset of set aset.
+       If mode is not None, the following values are allowed:
+       mode='keys': return an iterator over only the keysets that are subsets of aset is returned
+       mode='values': return an iterator over only the values that are associated to keysets that are subsets of aset    
+       If mode is neither of 'keys', 'values' or None, behavior is equivalent to mode=None.
+    """
+    path = []
+    return SetTrieMultiMap._itersubsets(self.root, list(sorted(aset)), 0, path, mode)
+  
+  @staticmethod
+  def _itersubsets(node, setarr, idx, path, mode):
+    """Used by itersubsets()."""
+    if node.data is not None:
+      path.append(node.data)
+    if node.flag_last:
+      if mode == 'keys':
+        yield set(path)
+      elif mode == 'values':
+        yield from node.value
+      else:
+        yield from [(set(path), val) for val in node.value]
+    for child in node.children:
+      if idx > len(setarr) - 1:
+        break
+      if child.data == setarr[idx]:
+        yield from SetTrieMultiMap._itersubsets(child, setarr, idx+1, path, mode)
+      else:
+        # advance in search set until we find child (or get to the end, or get to an element > child)
+        idx += 1
+        while idx < len(setarr) and child.data >= setarr[idx]:
+          if child.data == setarr[idx]:
+            yield from SetTrieMultiMap._itersubsets(child, setarr, idx, path, mode)
+            break
+          idx += 1
+    if node.data is not None:
+      path.pop()  
+
+  def subsets(self, aset, mode=None):
+    """Return a list of (keyset, value) pairs
+       for which keyset is (proper or not proper) subset of set aset.
+       Parameter mode: see documentation for itersubsets().
+    """
+    return list(self.itersubsets(aset, mode))
+
+  def iter(self, mode=None):
+    """Returns an iterator to all (keyset, value) pairs stored in this SetTrieMultiMap (using pre-order tree traversal).
+       The pairs are returned sorted to their keys, which are also sorted.
+       If mode is not None, the following values are allowed:
+       mode='keys': return an iterator over only the keysets that are subsets of aset
+       mode='values': return an iterator over only the values that are associated to keysets that are subsets of aset
+       If mode is neither of 'keys', 'values' or None, behavior is equivalent to mode=None.     
+    """
+    path = []
+    yield from SetTrieMultiMap._iter(self.root, path, mode)
+
+  def keys(self):
+    """Alias for self.iter(mode='keys')."""
+    return self.iter(mode='keys')
+
+  def values(self):
+    """Alias for self.iter(mode='values')."""
+    return self.iter(mode='values')
+
+  def items(self):
+    """Alias for self.iter(mode=None)."""
+    return self.iter(mode=None)
+
+  def __iter__(self):
+    """Same as self.iter(mode='keys')."""
+    return self.keys() 
+   
+  @staticmethod
+  def _iter(node, path, mode):
+    """Recursive function used by self.iter()."""
+    if node.data is not None:
+      path.append(node.data)
+    if node.flag_last:
+      if mode == 'keys':
+        yield set(path)
+      elif mode == 'values':
+        yield from node.value
+      else:
+        yield from [(set(path), val) for val in node.value]
+    for child in node.children:
+      yield from SetTrieMultiMap._iter(child, path, mode)
     if node.data is not None:
       path.pop()
   

@@ -15,9 +15,9 @@ For further information, please see [documentation](docs/build/html/index.html)
 
 Module test_settrie.py contains unittests for SetTrie and SetTrieMap classes.
 
-Version 1.0
+Version 1.1
 
-Release date: 2014-12-06
+Release date: 2014-12-11
 
 Author: Márton Miháltz 
 [https://sites.google.com/site/mmihaltz/](https://sites.google.com/site/mmihaltz/)

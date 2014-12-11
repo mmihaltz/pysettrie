@@ -54,8 +54,8 @@
 <span id="settrie-module"></span><h1>settrie Module<a class="headerlink" href="#module-settrie" title="Permalink to this headline">¶</a></h1>
 <p>Module settrie</p>
 <p>Requires Python3</p>
-<p>Version 1.0</p>
-<p>Release date: 2014-12-06</p>
+<p>Version 1.1</p>
+<p>Release date: 2014-12-11</p>
 <p>Author: Márton Miháltz 
 <a class="reference external" href="https://sites.google.com/site/mmihaltz/">https://sites.google.com/site/mmihaltz/</a></p>
 <p>Settrie is a pure-python module that provides support for efficient storage and querying of sets of sets using the trie data structure,
@@ -64,6 +64,7 @@ supporting operations like finding all the supersets/subsets of a given set from
 <ul class="simple">
 <li><a class="reference internal" href="#settrie.SetTrie" title="settrie.SetTrie"><tt class="xref py py-class docutils literal"><span class="pre">SetTrie</span></tt></a>: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations.</li>
 <li><a class="reference internal" href="#settrie.SetTrieMap" title="settrie.SetTrieMap"><tt class="xref py py-class docutils literal"><span class="pre">SetTrieMap</span></tt></a>: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.</li>
+<li><a class="reference internal" href="#settrie.SetTrieMultiMap" title="settrie.SetTrieMultiMap"><tt class="xref py py-class docutils literal"><span class="pre">SetTrieMultiMap</span></tt></a>: like SetTrieMap, but supports multiple values associated to each key.</li>
 </ul>
 <p>This module depends on the sortedcollection module (<a class="reference external" href="http://grantjenks.com/docs/sortedcontainers/">http://grantjenks.com/docs/sortedcontainers/</a>).
 One recommended way to install (tested on Ubuntu):</p>
@@ -320,6 +321,171 @@ Parameter mode: see documentation for itersupersets().</p>
 <dl class="method">
 <dt id="settrie.SetTrieMap.values">
 <tt class="descclassname">SetTrieMap.</tt><tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/settrie.html#SetTrieMap.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#settrie.SetTrieMap.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for self.iter(mode=&#8217;values&#8217;).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="settrie.SetTrieMultiMap">
+<em class="property">class </em><tt class="descclassname">settrie.</tt><tt class="descname">SetTrieMultiMap</tt><big>(</big><em>iterable=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<p>TODO doc</p>
+<p>Mapping container for efficient storage of key-value pairs where the keys are sets.
+Uses efficient trie implementation. Supports querying for values associated to subsets or supersets
+of stored key sets.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">settrie</span> <span class="kn">import</span> <span class="n">SetTrieMap</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">},</span> <span class="s">&#39;A&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">},</span> <span class="s">&#39;B&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">},</span> <span class="s">&#39;BB&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">assign</span><span class="p">({</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">},</span> <span class="s">&#39;C&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span>
+<span class="go">[({1, 2}, &#39;A&#39;), ({1, 2, 3}, &#39;B&#39;), ({1, 2, 3}, &#39;BB&#39;), ({2, 3, 5}, &#39;C&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span> <span class="p">)</span>
+<span class="go">[&#39;B&#39;, &#39;BB&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">},</span> <span class="s">&#39;Nope!&#39;</span><span class="p">)</span>
+<span class="go">&#39;Nope!&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+<span class="go">[{1, 2}, {1, 2, 3}, {2, 3, 5}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">supersets</span><span class="p">(</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">}</span> <span class="p">)</span>
+<span class="go">[({1, 2}, &#39;A&#39;), ({1, 2, 3}, &#39;B&#39;), ({1, 2, 3}, &#39;BB&#39;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">supersets</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">},</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;keys&#39;</span><span class="p">)</span>
+<span class="go">[{1, 2}, {1, 2, 3}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">m</span><span class="o">.</span><span class="n">supersets</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">},</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;values&#39;</span><span class="p">)</span>
+<span class="go">[&#39;A&#39;, &#39;B&#39;, &#39;BB&#39;]</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="settrie.SetTrieMultiMap.Node">
+<em class="property">class </em><tt class="descname">Node</tt><big>(</big><em>data=None</em>, <em>value=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.Node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<p>Node object used by SetTrieMultiMap. You probably don&#8217;t need to use it from the outside.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.aslist">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">aslist</tt><big>(</big><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.aslist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list containing all the (keyset, value) pairs stored in this SetTrieMap.
+The pairs are returned sorted to their keys, which are also sorted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.assign">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">assign</tt><big>(</big><em>akey</em>, <em>avalue</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.assign" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add key akey with associated value avalue to the container.
+akey must be a sortable and iterable container type.
+If akey is an already exising key, avalue will be appended to the associated values.
+Multiple occurences of the same value for the same key are preserved.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.contains">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">contains</tt><big>(</big><em>keyset</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff this set-trie contains set keyset as a key.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.count">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">count</tt><big>(</big><em>keyset</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of values associated to keyset. If keyset is unknown, returns 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.get">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">get</tt><big>(</big><em>keyset</em>, <em>default=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of values associated to keyset if keyset is in this SetTrieMultiMap, else default.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.hassubset">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">hassubset</tt><big>(</big><em>aset</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.hassubset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True iff there is at least one set in this SetTrieMultiMap that is the (proper or not proper) subset of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.hassuperset">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">hassuperset</tt><big>(</big><em>aset</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.hassuperset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True iff there is at least one key set in this SetTrieMultiMap that is the superset of set aset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.items">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">items</tt><big>(</big><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for self.iter(mode=None).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.iter">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">iter</tt><big>(</big><em>mode=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.iter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an iterator to all (keyset, value) pairs stored in this SetTrieMultiMap (using pre-order tree traversal).
+The pairs are returned sorted to their keys, which are also sorted.
+If mode is not None, the following values are allowed:
+mode=&#8217;keys&#8217;: return an iterator over only the keysets that are subsets of aset
+mode=&#8217;values&#8217;: return an iterator over only the values that are associated to keysets that are subsets of aset
+If mode is neither of &#8216;keys&#8217;, &#8216;values&#8217; or None, behavior is equivalent to mode=None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.iterget">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">iterget</tt><big>(</big><em>keyset</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.iterget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator to the values associated to keyset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.itersubsets">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">itersubsets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.itersubsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over pairs (keyset, value) from this SetTrieMultiMap 
+for which keyset is (proper or not proper) subset of set aset.
+If mode is not None, the following values are allowed:
+mode=&#8217;keys&#8217;: return an iterator over only the keysets that are subsets of aset is returned
+mode=&#8217;values&#8217;: return an iterator over only the values that are associated to keysets that are subsets of aset    
+If mode is neither of &#8216;keys&#8217;, &#8216;values&#8217; or None, behavior is equivalent to mode=None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.itersupersets">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">itersupersets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.itersupersets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterator over all (keyset, value) pairs from this SetTrieMultiMap 
+for which set keyset is a superset (proper or not proper) of set aset.
+If mode is not None, the following values are allowed:
+mode=&#8217;keys&#8217;: return an iterator over only the keysets that are supersets of aset is returned
+mode=&#8217;values&#8217;: return an iterator over only the values that are associated to keysets that are supersets of aset
+If mode is neither of &#8216;keys&#8217;, &#8216;values&#8217; or None, behavior is equivalent to mode=None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.keys">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">keys</tt><big>(</big><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for self.iter(mode=&#8217;keys&#8217;).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.printtree">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">printtree</tt><big>(</big><em>tabchr=' '</em>, <em>tabsize=2</em>, <em>stream=&lt;_io.TextIOWrapper name='&lt;stdout&gt;' mode='w' encoding='UTF-8'&gt;</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.printtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a mirrored 90-degree rotation of the nodes in this SetTrieMap to stream (default: sys.stdout).
+Nodes marked as flag_last are trailed by the &#8216;#&#8217; character.
+tabchr and tabsize determine the indentation: at tree level n, n*tabsize tabchar characters will be used.
+Associated values are printed after &#8216;: &#8216; trailing flag_last=True nodes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.subsets">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">subsets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.subsets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of (keyset, value) pairs
+for which keyset is (proper or not proper) subset of set aset.
+Parameter mode: see documentation for itersubsets().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.supersets">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">supersets</tt><big>(</big><em>aset</em>, <em>mode=None</em><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.supersets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list containing pairs of (keyset, value) for which keyset is superset of set aset.
+Parameter mode: see documentation for itersupersets().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="settrie.SetTrieMultiMap.values">
+<tt class="descclassname">SetTrieMultiMap.</tt><tt class="descname">values</tt><big>(</big><big>)</big><a class="headerlink" href="#settrie.SetTrieMultiMap.values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for self.iter(mode=&#8217;values&#8217;).</p>
 </dd></dl>
 
