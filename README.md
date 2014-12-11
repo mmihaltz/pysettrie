@@ -10,6 +10,7 @@ from a collection of sets.
 The following classes are included: 
 - SetTrie: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations. 
 - SetTrieMap: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.
+- SetTrieMultiMap: like SetTrieMap, but supports multiple values associated to each key.
 
 For further information, please see [documentation](docs/build/html/index.html)
 
