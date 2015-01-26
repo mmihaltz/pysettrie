@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # coding: utf-8
 """
-Module settrie 
+Module settrie
 
 Requires Python3
 
-Version 1.1
-
-Release date: 2014-12-11
+Version 0.1.2
+Release date: 2015-01-26
 
 Author: Márton Miháltz 
 https://sites.google.com/site/mmihaltz/
 
 Settrie is a pure-python module that provides support for efficient storage and querying of sets of sets using the trie data structure,
-supporting operations like finding all the supersets/subsets of a given set from a collection of sets.
+supporting operations like finding all the supersets/subsets of a given set from a collection of sets. The original motivation for this module
+was to support efficient search for supersets of sets of feature-value pairs (e.g matching nouns against verb argument positions) in our natural language parser project.
 
 The following classes are included:
 
@@ -38,8 +38,12 @@ See https://www.gnu.org/licenses/lgpl.html
 
 """
 
+__version__ = "0.1.2"
+
+
 import sys
 import sortedcontainers
+
 
 class SetTrie:
   """Set-trie container of sets for efficient supersets/subsets of a set over a set of sets queries.
@@ -228,12 +232,12 @@ class SetTrie:
         yield from SetTrie._itersubsets(child, setarr, idx+1, path)
       else:
         # advance in search set until we find child (or get to the end, or get to an element > child)
-        idx += 1
-        while idx < len(setarr) and child.data >= setarr[idx]:
-          if child.data == setarr[idx]:
-            yield from SetTrie._itersubsets(child, setarr, idx, path)
+        jdx = idx + 1
+        while jdx < len(setarr) and child.data >= setarr[jdx]:
+          if child.data == setarr[jdx]:
+            yield from SetTrie._itersubsets(child, setarr, jdx, path)
             break
-          idx += 1
+          jdx += 1        
     if node.data is not None:
       path.pop()  
 
@@ -537,12 +541,12 @@ class SetTrieMap:
         yield from SetTrieMap._itersubsets(child, setarr, idx+1, path, mode)
       else:
         # advance in search set until we find child (or get to the end, or get to an element > child)
-        idx += 1
-        while idx < len(setarr) and child.data >= setarr[idx]:
-          if child.data == setarr[idx]:
-            yield from SetTrieMap._itersubsets(child, setarr, idx, path, mode)
+        jdx = idx+1
+        while jdx < len(setarr) and child.data >= setarr[jdx]:
+          if child.data == setarr[jdx]:
+            yield from SetTrieMap._itersubsets(child, setarr, jdx, path, mode)
             break
-          idx += 1
+          jdx += 1
     if node.data is not None:
       path.pop()  
 
@@ -890,12 +894,12 @@ class SetTrieMultiMap:
         yield from SetTrieMultiMap._itersubsets(child, setarr, idx+1, path, mode)
       else:
         # advance in search set until we find child (or get to the end, or get to an element > child)
-        idx += 1
-        while idx < len(setarr) and child.data >= setarr[idx]:
-          if child.data == setarr[idx]:
-            yield from SetTrieMultiMap._itersubsets(child, setarr, idx, path, mode)
+        jdx = idx+1
+        while jdx < len(setarr) and child.data >= setarr[jdx]:
+          if child.data == setarr[jdx]:
+            yield from SetTrieMultiMap._itersubsets(child, setarr, jdx, path, mode)
             break
-          idx += 1
+          jdx += 1
     if node.data is not None:
       path.pop()  
 

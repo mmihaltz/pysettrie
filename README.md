@@ -6,6 +6,7 @@ https://github.com/mmihaltz/pysettrie
 pysettrie is a python3 package that provides support for efficient storage and querying of sets of sets 
 using the trie data structure, supporting operations like finding all the supersets/subsets of a given set 
 from a collection of sets.
+The original motivation for this module was to support efficient search for supersets of sets of feature-value pairs (e.g matching nouns against verb argument positions) in our natural language parser project.
 
 The following classes are included: 
 - SetTrie: set-trie container for sets; supports efficient supersets/subsets of a given search set calculations. 
@@ -15,10 +16,6 @@ The following classes are included:
 For further information, please see [documentation](docs/build/html/index.html)
 
 Module test_settrie.py contains unittests for SetTrie and SetTrieMap classes.
-
-Version 1.1
-
-Release date: 2014-12-11
 
 Author: Márton Miháltz 
 [https://sites.google.com/site/mmihaltz/](https://sites.google.com/site/mmihaltz/)

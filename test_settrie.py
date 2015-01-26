@@ -103,6 +103,12 @@ class TestSetTrie(unittest.TestCase):
     self.assertEqual(self.t.subsets({1, 2, 3, 4, 5}), [{1, 2, 4}, {1, 3}, {1, 3, 5}, {1, 4}, {2, 3, 5}, {2, 4}])
     self.assertEqual(self.t.subsets({0, 1, 3, 5}), [{1, 3}, {1, 3, 5}])
     self.assertEqual(self.t.subsets({1, 2, 5}), [])
+    self.assertEqual(self.t.subsets({1, 4}), [{1, 4}]) # :)   
+    self.assertEqual(self.t.subsets({1, 3, 5}), [{1, 3}, {1, 3, 5}])
+    self.assertEqual(self.t.subsets({1, 3, 5, 111}), [{1, 3}, {1, 3, 5}])
+    self.assertEqual(self.t.subsets({1, 4, 8}), [{1, 4}])
+    self.assertEqual(self.t.subsets({2, 3, 4, 5}), [{2, 3, 5}, {2, 4}])
+    self.assertEqual(self.t.subsets({2, 3, 5, 6}), [{2, 3, 5}])
 
 
 class TestSetTrieMap(unittest.TestCase):
@@ -214,6 +220,14 @@ class TestSetTrieMap(unittest.TestCase):
     self.assertEqual(self.t.subsets({1, 2, 3, 4, 5}, mode='values'), ['D', 'A', 'B', 'C', 'F', 'E'])
     self.assertEqual(self.t.subsets({0, 1, 3, 5}, mode='values'), ['A', 'B'])
     self.assertEqual(self.t.subsets({1, 2, 5}, mode='values'), [])
+    self.assertEqual(self.t.subsets({1, 4}), [({1, 4}, 'C')])
+    self.assertEqual(self.t.subsets({1, 3, 5}), [({1, 3}, 'A'), ({1, 3, 5}, 'B')])
+    self.assertEqual(self.t.subsets({1, 3, 5, 111}), [({1, 3}, 'A'), ({1, 3, 5}, 'B')])
+    self.assertEqual(self.t.subsets({1, 4, 8}), [({1, 4}, 'C')])
+    self.assertEqual(self.t.subsets({2, 3, 4, 5}), [({2, 3, 5}, 'F'), ({2, 4}, 'E')])
+    self.assertEqual(self.t.subsets({2, 3, 5, 6}), [({2, 3, 5}, 'F')])    
+    
+    
 
   def test_iters(self):
     self.assertEqual(self.t.aslist(), 
@@ -311,6 +325,12 @@ class TestSetTrieMultiMap(unittest.TestCase):
     self.assertEqual(self.t.subsets({1, 2, 5}), [])
     self.assertEqual(self.t.subsets({1, 2, 5}, mode='keys'), [])
     self.assertEqual(self.t.subsets({1, 2, 5}, mode='values'), [])
+    self.assertEqual(self.t.subsets({1, 4}), [({1, 4}, 'C'), ({1, 4}, 'CC')])
+    self.assertEqual(self.t.subsets({1, 3, 5}), [({1, 3}, 'A'), ({1, 3}, 'AA'), ({1, 3, 5}, 'B')])
+    self.assertEqual(self.t.subsets({1, 3, 5, 111}), [({1, 3}, 'A'), ({1, 3}, 'AA'), ({1, 3, 5}, 'B')])
+    self.assertEqual(self.t.subsets({1, 4, 8}), [({1, 4}, 'C'), ({1, 4}, 'CC')])
+    self.assertEqual(self.t.subsets({2, 3, 4, 5}), [({2, 3, 5}, 'F'), ({2, 3, 5}, 'FF'), ({2, 3, 5}, 'FFF'), ({2, 4}, 'E')])
+    self.assertEqual(self.t.subsets({2, 3, 5, 6}), [({2, 3, 5}, 'F'), ({2, 3, 5}, 'FF'), ({2, 3, 5}, 'FFF')])     
 
 # - - - - - - -
 
