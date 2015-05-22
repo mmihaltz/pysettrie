@@ -5,40 +5,19 @@ Module settrie
 
 Requires Python3
 
-Version 0.1.2
-Release date: 2015-01-26
+Version 0.1.3
+Release date: 2015-05-22
 
-Author: Márton Miháltz 
-https://sites.google.com/site/mmihaltz/
+Author: Márton Miháltz
+Project home: https://github.com/mmihaltz/pysettrie
 
-Settrie is a pure-python module that provides support for efficient storage and querying of sets of sets using the trie data structure,
-enabling operations like finding all the supersets/subsets of a given set from a collection of sets. The original motivation for this module
-was to provide efficient search for supersets of sets of feature-value pairs (e.g matching nouns against verb argument positions) in our natural language parser project.
-
-The following classes are included:
-
-* :py:class:`SetTrie`: set-trie container for sets; supports efficient calculation of supersets/subsets of a given search set.
-* :py:class:`SetTrieMap`: mapping container using sets as keys; supports efficient operations like SetTrie but also stores values associated to the key sets.
-* :py:class:`SetTrieMultiMap`: like SetTrieMap, but supports multiple values associated to each key.
-
-This module depends on the sortedcollection module (http://grantjenks.com/docs/sortedcontainers/).
-One recommended way to install (tested on Ubuntu)::
-
-  sudo pip3 install sortedcontainers
-
-If you don't have pip3::
-
-  sudo apt-get install python3-setuptools
-  sudo easy_install3 pip
-
-For more information see README.md.
+See README.md for more information.
 
 Licensed under the GNU LESSER GENERAL PUBLIC LICENSE, Version 3.
 See https://www.gnu.org/licenses/lgpl.html
-
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 
 import sys
@@ -692,11 +671,17 @@ class SetTrieMultiMap:
     """Add key akey with associated value avalue to the container.
        akey must be a sortable and iterable container type.
        If akey is an already exising key, avalue will be appended to the associated values.
-       Multiple occurences of the same value for the same key are preserved."""
-    self._assign(self.root, iter(sorted(akey)), avalue)
+       Multiple occurrences of the same value for the same key are preserved.
+       Returns number of values associated to akey after the assignment,
+       ie. returns 1 if akey was a nonexisting key before this function call,
+       returns (number of items before call + 1) if akey was an already existing key.
+       """
+    valcnt = [0]
+    self._assign(self.root, iter(sorted(akey)), avalue, valcnt)
+    return valcnt[0]
   
   @staticmethod
-  def _assign(node, it, val):
+  def _assign(node, it, val, valcnt):
     """Recursive function used by self.assign()."""
     try:
       data = next(it)
@@ -712,6 +697,7 @@ class SetTrieMultiMap:
       if node.value is None:
         node.value = []
       node.value.append(val)
+      valcnt[0] = len(node.value) # return # of values for key after this assignment
 
   def contains(self, keyset):
     """Returns True iff this set-trie contains set keyset as a key."""

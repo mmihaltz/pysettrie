@@ -252,6 +252,13 @@ class TestSetTrieMultiMap(unittest.TestCase):
       [({1, 2, 4}, 'D'), ({1, 2, 4}, 'DD'), ({1, 3}, 'A'), ({1, 3}, 'AA'), ({1, 3, 5}, 'B'),
        ({1, 4}, 'C'), ({1, 4}, 'CC'), ({2, 3, 5}, 'F'), ({2, 3, 5}, 'FF'), ({2, 3, 5}, 'FFF'), ({2, 4}, 'E')] )
 
+  def test_assign_returned_value(self):
+    x = SetTrieMultiMap()
+    self.assertEqual(x.assign({1, 3}, 'A'), 1)
+    self.assertEqual(x.assign({1, 3}, 'AA'), 2)
+    self.assertEqual(x.assign({1, 3}, 'A'), 3)
+    self.assertEqual(x.assign({2, 4, 5}, 'Y'), 1)
+
   def test_count(self):
     self.assertEqual(self.t.count({1, 3}), 2)
     self.assertEqual(self.t.count({1, 3, 5}), 1)

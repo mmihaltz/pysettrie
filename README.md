@@ -43,5 +43,9 @@ See also:
 - http://stackoverflow.com/questions/9353100/quickly-checking-if-set-is-superset-of-stored-sets
 - http://stackoverflow.com/questions/1263524/superset-search?rq=1
 
+Changes:
+* Version 0.1.3:
+  - SetTrieMultiMap.assign() returns number of values associated to key after assignment.
+
 Licensed under the [GNU LESSER GENERAL PUBLIC LICENSE, Version 3](https://www.gnu.org/licenses/lgpl.html).
 
