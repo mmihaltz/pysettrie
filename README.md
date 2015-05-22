@@ -15,7 +15,7 @@ The following classes are included:
 
 For further information, please see [documentation](docs/build/html/index.html)
 
-Module test_settrie.py contains unittests for SetTrie and SetTrieMap classes.
+Module test_settrie.py contains unittests for all the containers.
 
 Author: Márton Miháltz 
 [https://sites.google.com/site/mmihaltz/](https://sites.google.com/site/mmihaltz/)
