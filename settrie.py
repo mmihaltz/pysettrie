@@ -691,7 +691,7 @@ class SetTrieMultiMap:
       except ValueError: # not found
         nextnode = SetTrieMultiMap.Node(data) # create new node
         node.children.add(nextnode) # add to children & sort
-      SetTrieMultiMap._assign(nextnode, it, val) # recurse
+      SetTrieMultiMap._assign(nextnode, it, val, valcnt) # recurse
     except StopIteration: # end of set to add
       node.flag_last = True
       if node.value is None:
