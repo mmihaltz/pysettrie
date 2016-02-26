@@ -611,15 +611,11 @@ class SetTrieMap:
 
 
 class SetTrieMultiMap:
-  """ TODO doc
-  
-      Mapping container for efficient storage of key-value pairs where the keys are sets.
-      Uses efficient trie implementation. Supports querying for values associated to subsets or supersets
-      of stored key sets.
-      
+  """ Like SetTrieMap, but the associated values are lists that can have multiple items added.
+
       Usage:
       ------
-      >>> from settrie import SetTrieMap
+      >>> from settrie import SetTrieMultiMap
       >>> m.assign({1,2}, 'A')
       >>> m.assign({1,2,3}, 'B')
       >>> m.assign({1,2,3}, 'BB')
