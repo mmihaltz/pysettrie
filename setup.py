@@ -9,7 +9,7 @@ except ImportError :
 setup(
     name='pysettrie',
     url='https://github.com/datamade/census_area',
-    #version='0.2',
+    version='0.1.3',
     author='Márton Miháltz ',
     description='Efficient storage and querying of sets of sets using the trie data structure',
     packages=['settrie'],
