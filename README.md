@@ -1,6 +1,6 @@
 pysettrie
 =========
-[![Build Status](https://travis-ci.org/datamade/pysettrie.svg)](https://travis-ci.org/datamade/pysettrie)
+[![Build Status](https://travis-ci.org/mmihaltz/pysettrie.svg)](https://travis-ci.org/mmihaltz/pysettrie)
 
 https://github.com/mmihaltz/pysettrie
 
