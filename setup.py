@@ -8,7 +8,7 @@ except ImportError :
 
 setup(
     name='pysettrie',
-    url='https://github.com/datamade/census_area',
+    url='https://github.com/mmihaltz/pysettrie',
     version='0.1.3',
     author='Márton Miháltz ',
     description='Efficient storage and querying of sets of sets using the trie data structure',
@@ -18,7 +18,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
         'Natural Language :: English',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
