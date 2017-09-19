@@ -1067,44 +1067,28 @@ class SetTrieMultiMap:
            equivalent to mode=None.
         """
         path = []
-        return SetTrieMultiMap._itersubsets(self.root,
-                                            list(sorted(aset)), 0,
-                                            path, mode)
+        return SetTrieMultiMap._itersubsets(self.root, aset, path,
+                                            mode)
 
     @staticmethod
-    def _itersubsets(node, setarr, idx, path, mode):
+    def _itersubsets(node, setarr, path, mode):
         """Used by itersubsets()."""
-        if node.data is not None:
-            path.append(node.data)
+        path.append(node.data)
+
         if node.flag_last:
+            f_path = set(path[1:])
             if mode == 'keys':
-                yield set(path)
+                yield f_path
             elif mode == 'values':
                 yield from node.value
             else:
-                yield from [(set(path), val) for val in node.value]
+                yield from ((f_path, val) for val in node.value)
+
         for child in node.children:
-            if idx > len(setarr) - 1:
-                break
-            if child.data == setarr[idx]:
+            if child.data in setarr:
                 yield from SetTrieMultiMap._itersubsets(child, setarr,
-                                                        idx + 1, path,
-                                                        mode)
-            else:
-                # advance in search set until we find child (or get to
-                # the end, or get to an element > child)
-                jdx = idx + 1
-                while jdx < len(setarr) and child.data >= setarr[jdx]:
-                    if child.data == setarr[jdx]:
-                        yield from SetTrieMultiMap._itersubsets(child,
-                                                                setarr,
-                                                                jdx,
-                                                                path,
-                                                                mode)
-                        break
-                    jdx += 1
-        if node.data is not None:
-            path.pop()
+                                                        path, mode)
+        path.pop()
 
     def subsets(self, aset, mode=None):
         """Return a list of (keyset, value) pairs
