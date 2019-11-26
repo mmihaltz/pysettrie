@@ -110,7 +110,33 @@ class TestSetTrie(unittest.TestCase):
     self.assertEqual(self.t.subsets({2, 3, 4, 5}), [{2, 3, 5}, {2, 4}])
     self.assertEqual(self.t.subsets({2, 3, 5, 6}), [{2, 3, 5}])
 
-
+  def test_add_remove(self):
+    self.t.remove({1,3})
+    self.assertEqual(self.t.aslist(), [{1, 2, 4}, {1, 3, 5}, {1, 4}, {2, 3, 5}, {2, 4}])
+    self.t.remove({1,3,5})
+    self.assertEqual(self.t.aslist(), [{1, 2, 4}, {1, 4}, {2, 3, 5}, {2, 4}])
+    self.t.remove({1,4})
+    self.assertEqual(self.t.aslist(), [{1, 2, 4}, {2, 3, 5}, {2, 4}])
+    self.t.remove({1,2,4})
+    self.assertEqual(self.t.aslist(), [{2, 3, 5}, {2, 4}])
+    self.t.remove({2,4})
+    self.assertEqual(self.t.aslist(), [{2, 3, 5}])
+    self.t.remove({2,3,5})
+    self.assertEqual(self.t.aslist(), [])
+    self.assertTrue(len(self.t.root.children) == 0)
+    self.t.add({1,3})
+    self.assertEqual(self.t.aslist(), [{1, 3}])
+    self.t.add({1,3,5})
+    self.assertEqual(self.t.aslist(), [{1, 3}, {1, 3, 5}])
+    self.t.add({1,4})
+    self.assertEqual(self.t.aslist(), [{1, 3}, {1, 3, 5}, {1, 4}])
+    self.t.add({1,2,4})
+    self.assertEqual(self.t.aslist(), [{1, 2, 4}, {1, 3}, {1, 3, 5}, {1, 4}])
+    self.t.add({2,4})
+    self.assertEqual(self.t.aslist(), [{1, 2, 4}, {1, 3}, {1, 3, 5}, {1, 4}, {2, 4}])
+    self.t.add({2,3,5})
+    self.assertEqual(self.t.aslist(), [{1, 2, 4}, {1, 3}, {1, 3, 5}, {1, 4}, {2, 3, 5}, {2, 4}])
+    
 class TestSetTrieMap(unittest.TestCase):
   """
   UnitTest for SetTrieMap class
