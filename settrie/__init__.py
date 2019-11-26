@@ -91,7 +91,7 @@ class SetTrie:
 
     @staticmethod
     def _add(node, it):
-        """Recursive function used by self.insert().
+        """Recursive function used by self.add().
            node is a SetTrieNode object
            it is an iterator over a sorted set"""
         try:
@@ -107,6 +107,33 @@ class SetTrie:
             SetTrie._add(nextnode, it)  # recurse
         except StopIteration:  # end of set to add
             node.flag_last = True
+
+    def remove(self, aset):
+        """Remove set aset from the container.  aset must be a sortable and
+           iterable container type.
+        """
+        self._remove(self.root, iter(sorted(aset)))
+    
+    @staticmethod
+    def _remove(node, it):
+        """Recursive function used by self.remove().
+           node is a SetTrieNode object
+           it is an iterator over a sorted set"""
+        try:
+            data = next(it)
+            nextnode = None
+            try:
+                # find first child with this data
+                nextnode = node.children[node.children.index(
+                    SetTrie.Node(data))]
+            except ValueError:
+                return  # 
+            SetTrie._remove(nextnode, it)  # recurse
+            if not nextnode.flag_last and len(nextnode.children) == 0:
+                node.children.remove(nextnode)
+            
+        except StopIteration:  # end of set to remove
+            node.flag_last = False
 
     def contains(self, aset):
         """Returns True iff this set-trie contains set aset."""
