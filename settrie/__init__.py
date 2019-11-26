@@ -94,19 +94,20 @@ class SetTrie:
         """Recursive function used by self.add().
            node is a SetTrieNode object
            it is an iterator over a sorted set"""
-        try:
-            data = next(it)
-            nextnode = None
-            try:
-                # find first child with this data
-                nextnode = node.children[node.children.index(
-                    SetTrie.Node(data))]
-            except ValueError:  # not found
-                nextnode = SetTrie.Node(data)  # create new node
-                node.children.add(nextnode)  # add to children & sort
-            SetTrie._add(nextnode, it)  # recurse
-        except StopIteration:  # end of set to add
-            node.flag_last = True
+        for data in it:
+            nextnode = SetTrie.Node(data)  # create new node
+            # find first child with this data
+            idx = node.children.bisect_left(nextnode)
+            if len(node.children) <= idx:
+                node.children.add(nextnode) # add to children & sort
+                node = nextnode
+            else:
+                testnode = node.children[idx]
+                if testnode != nextnode:
+                    node.children.add(nextnode)  # add to children & sort   
+                    node = nextnode
+                else: node = testnode
+        node.flag_last = True  # end of set to add
 
     def remove(self, aset):
         """Remove set aset from the container.  aset must be a sortable and
@@ -119,21 +120,20 @@ class SetTrie:
         """Recursive function used by self.remove().
            node is a SetTrieNode object
            it is an iterator over a sorted set"""
-        try:
-            data = next(it)
-            nextnode = None
-            try:
-                # find first child with this data
-                nextnode = node.children[node.children.index(
-                    SetTrie.Node(data))]
-            except ValueError:
-                return  # 
-            SetTrie._remove(nextnode, it)  # recurse
-            if not nextnode.flag_last and len(nextnode.children) == 0:
-                node.children.remove(nextnode)
-            
-        except StopIteration:  # end of set to remove
-            node.flag_last = False
+        nodes = []
+        for data in it:
+            nodes.append(node)  # add to post-recursion stack
+            nextnode = SetTrie.Node(data)
+            idx = node.children.bisect_left(nextnode)
+            if len(node.children) <= idx: return  #not in container
+            node = node.children[idx]
+            if node != nextnode: return  # not in container
+        node.flag_last = False #  nextnode == node, last node and not in stack
+        if len(node.children) != 0: return
+        for node in nodes[::-1]: #  walk backwards through child nodes
+            if node.flag_last or len(node.children) != 1: break
+            node.children.remove(nextnode)
+            nextnode = node
 
     def contains(self, aset):
         """Returns True iff this set-trie contains set aset."""
@@ -154,17 +154,14 @@ class SetTrie:
     @staticmethod
     def _contains(node, it):
         """Recursive function used by self.contains()."""
-        try:
-            data = next(it)
-            try:
-                # find first child with this data
-                matchnode = node.children[node.children.index(
-                    SetTrie.Node(data))]
-                return SetTrie._contains(matchnode, it)  # recurse
-            except ValueError:  # not found
-                return False
-        except StopIteration:
-            return node.flag_last
+        for data in it:
+            # find first child with this data
+            curnode = SetTrie.Node(data)
+            idx = node.children.bisect_left(curnode)
+            if len(node.children) <= idx: return False
+            node = node.children[idx]
+            if node != curnode: return False  # not found
+        return node.flag_last
 
     def hassuperset(self, aset):
         """Returns True iff there is at least one set in this set-trie that is
@@ -246,11 +243,12 @@ class SetTrie:
         if idx > len(setarr) - 1:
             return False
         found = False
-        try:
-            c = node.children.index(SetTrie.Node(setarr[idx]))
-            found = SetTrie._hassubset(node.children[c], setarr, idx + 1)
-        except ValueError:
-            pass
+        curnode = SetTrie.Node(setarr[idx])
+        i = node.children.bisect_left(curnode)
+        if len(node.children) > i:
+            checknode = node.children[i]
+            if curnode == checknode:
+                found = SetTrie._hassubset(checknode, setarr, idx + 1)
         if not found:
             return SetTrie._hassubset(node, setarr, idx + 1)
         else:
