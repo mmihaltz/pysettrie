@@ -128,9 +128,10 @@ class SetTrie:
             if len(node.children) <= idx: return  #not in container
             node = node.children[idx]
             if node != nextnode: return  # not in container
-        node.flag_last = False #  nextnode == node, last node and not in stack
+        node.flag_last = False # final node set to off
+        nextnode = node
         for node in nodes[::-1]: #  walk backwards through child nodes
-            if node.flag_last or len(nextnode.children) != 0: break
+            if nextnode.flag_last or len(nextnode.children) != 0: break
             node.children.remove(nextnode)
             nextnode = node
 
