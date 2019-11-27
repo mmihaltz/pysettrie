@@ -174,19 +174,17 @@ class SetTrie:
     @staticmethod
     def _hassuperset(node, setarr, idx):
         """Used by hassuperset()."""
-        if idx > len(setarr) - 1:
+        if (node.flag_last or len(node.children) != 0) and idx > len(setarr) - 1:
             return True
         found = False
-        for child in node.children:
-            # don't go to subtrees where current element cannot be
-            if child.data > setarr[idx]:
-                break
-            if child.data == setarr[idx]:
-                found = SetTrie._hassuperset(child, setarr, idx + 1)
-            else:
-                found = SetTrie._hassuperset(child, setarr, idx)
-            if found:
-                break
+        curnode = SetTrie.Node(setarr[idx])
+        i = node.children.bisect_left(curnode)
+        for child in node.children[:i]:
+            if SetTrie._hassuperset(child, setarr, idx): return True
+        if len(node.children) > i:
+            checknode = node.children[i]
+            if curnode == checknode:
+                found = SetTrie._hassuperset(checknode, setarr, idx + 1)
         return found
 
     def itersupersets(self, aset):
@@ -199,27 +197,21 @@ class SetTrie:
     @staticmethod
     def _itersupersets(node, setarr, idx, path):
         """Used by itersupersets()."""
+        if idx > len(setarr) - 1:
+            # no more elements to find: just traverse this subtree to get
+            # all supersets
+            yield from SetTrie._iter(node, path)
+            return
         if node.data is not None:
             path.append(node.data)
-        if node.flag_last and idx > len(setarr) - 1:
-            yield set(path)
-        # we still have elements of aset to find
-        if idx <= len(setarr) - 1:
-            for child in node.children:
-                # don't go to subtrees where current element cannot be
-                if child.data > setarr[idx]:
-                    break
-                if child.data == setarr[idx]:
-                    yield from SetTrie._itersupersets(child, setarr,
-                                                      idx + 1, path)
-                else:
-                    yield from SetTrie._itersupersets(child, setarr,
-                                                      idx, path)
-        # no more elements to find: just traverse this subtree to get
-        # all supersets
-        else:
-            for child in node.children:
-                yield from SetTrie._itersupersets(child, setarr, idx, path)
+        curnode = SetTrie.Node(setarr[idx])
+        i = node.children.bisect_left(curnode)
+        for child in node.children[:i]:
+            yield from SetTrie._itersupersets(child, setarr, idx, path)
+        if len(node.children) > i:
+            checknode = node.children[i]
+            if curnode == checknode:
+                yield from SetTrie._itersupersets(checknode, setarr, idx + 1, path)
         if node.data is not None:
             path.pop()
 
@@ -242,17 +234,19 @@ class SetTrie:
             return True
         if idx > len(setarr) - 1:
             return False
-        found = False
         curnode = SetTrie.Node(setarr[idx])
         i = node.children.bisect_left(curnode)
         if len(node.children) > i:
             checknode = node.children[i]
             if curnode == checknode:
-                found = SetTrie._hassubset(checknode, setarr, idx + 1)
+                i += 1
+                if SetTrie._hassubset(checknode, setarr, idx + 1): return True
         if not found:
-            return SetTrie._hassubset(node, setarr, idx + 1)
-        else:
-            return True
+            for child in node.children[i:]:
+                jdx = bisect.bisect_left(setarr, node.data, idx + 1)
+                if jdx < len(setarr) and child.data == setarr[jdx]:
+                    if SetTrie._hassubset(child, setarr, jdx + 1): return True
+        return False
 
     def itersubsets(self, aset):
         """Return an iterator over all sets in this set-trie that are (proper
@@ -268,21 +262,18 @@ class SetTrie:
             path.append(node.data)
         if node.flag_last:
             yield set(path)
-        for child in node.children:
-            if idx > len(setarr) - 1:
-                break
-            if child.data == setarr[idx]:
-                yield from SetTrie._itersubsets(child, setarr, idx + 1, path)
-            else:
-                # advance in search set until we find child (or get to
-                # the end, or get to an element > child)
-                jdx = idx + 1
-                while jdx < len(setarr) and child.data >= setarr[jdx]:
-                    if child.data == setarr[jdx]:
-                        yield from SetTrie._itersubsets(child, setarr,
-                                                        jdx, path)
-                        break
-                    jdx += 1
+        if idx <= len(setarr) - 1:
+            curnode = SetTrie.Node(setarr[idx])
+            i = node.children.bisect_left(curnode)
+            if len(node.children) > i:
+                checknode = node.children[i]
+                if curnode == checknode:
+                    i += 1
+                    yield from SetTrie._itersubsets(checknode, setarr, idx + 1, path)             
+            for child in node.children[i:]:
+                jdx = bisect.bisect_left(setarr, child.data, idx + 1)
+                if jdx < len(setarr) and child.data == setarr[jdx]:
+                    yield from SetTrie._itersubsets(child, setarr, jdx + 1, path)
         if node.data is not None:
             path.pop()
 
