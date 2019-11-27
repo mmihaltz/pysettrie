@@ -241,11 +241,10 @@ class SetTrie:
             if curnode == checknode:
                 i += 1
                 if SetTrie._hassubset(checknode, setarr, idx + 1): return True
-        if not found:
-            for child in node.children[i:]:
-                jdx = bisect.bisect_left(setarr, node.data, idx + 1)
-                if jdx < len(setarr) and child.data == setarr[jdx]:
-                    if SetTrie._hassubset(child, setarr, jdx + 1): return True
+        for child in node.children[i:]:
+            jdx = bisect.bisect_left(setarr, node.data, idx + 1)
+            if jdx < len(setarr) and child.data == setarr[jdx]:
+                if SetTrie._hassubset(child, setarr, jdx + 1): return True
         return False
 
     def itersubsets(self, aset):
