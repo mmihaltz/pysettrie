@@ -87,7 +87,7 @@ class SetTrie:
         """Add set aset to the container.  aset must be a sortable and
            iterable container type.
         """
-        self._add(self.root, iter(sorted(aset)))
+        SetTrie._add(self.root, iter(sorted(aset)))
 
     @staticmethod
     def _add(node, it):
@@ -108,12 +108,12 @@ class SetTrie:
                     node = nextnode
                 else: node = testnode
         node.flag_last = True  # end of set to add
-
+    
     def remove(self, aset):
         """Remove set aset from the container.  aset must be a sortable and
            iterable container type.
         """
-        self._remove(self.root, iter(sorted(aset)))
+        SetTrie._remove(self.root, iter(sorted(aset)))
     
     @staticmethod
     def _remove(node, it):
@@ -241,10 +241,12 @@ class SetTrie:
             if curnode == checknode:
                 i += 1
                 if SetTrie._hassubset(checknode, setarr, idx + 1): return True
-        for child in node.children[i:]:
-            jdx = bisect.bisect_left(setarr, node.data, idx + 1)
-            if jdx < len(setarr) and child.data == setarr[jdx]:
-                if SetTrie._hassubset(child, setarr, jdx + 1): return True
+            for child in node.children[i:]:
+                jdx = bisect.bisect_left(setarr, child.data, idx + 1)
+                if jdx < len(setarr) and child.data == setarr[jdx]:
+                    if SetTrie._hassubset(child, setarr, jdx + 1): return True
+                    idx = jdx
+                else: idx = jdx - 1
         return False
 
     def itersubsets(self, aset):
@@ -269,10 +271,12 @@ class SetTrie:
                 if curnode == checknode:
                     i += 1
                     yield from SetTrie._itersubsets(checknode, setarr, idx + 1, path)             
-            for child in node.children[i:]:
-                jdx = bisect.bisect_left(setarr, child.data, idx + 1)
-                if jdx < len(setarr) and child.data == setarr[jdx]:
-                    yield from SetTrie._itersubsets(child, setarr, jdx + 1, path)
+                for child in node.children[i:]:
+                    jdx = bisect.bisect_left(setarr, child.data, idx + 1)
+                    if jdx < len(setarr) and child.data == setarr[jdx]:
+                        yield from SetTrie._itersubsets(child, setarr, jdx + 1, path)
+                        idx = jdx
+                    else: idx = jdx - 1
         if node.data is not None:
             path.pop()
 
@@ -330,7 +334,7 @@ class SetTrie:
            determine the indentation: at tree level n, n*tabsize
            tabchar characters will be used.
         """
-        self._printtree(self.root, 0, tabchr, tabsize, stream)
+        SetTrie._printtree(self.root, 0, tabchr, tabsize, stream)
 
     @staticmethod
     def _printtree(node, level, tabchr, tabsize, stream):
