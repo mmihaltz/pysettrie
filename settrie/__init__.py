@@ -150,8 +150,8 @@ class SetTrie:
     @staticmethod
     def _hassuperset(node, setarr, idx):
         """Used by hassuperset()."""
-        if (node.flag_last or len(node.children) != 0) and idx > len(setarr) - 1:
-            return True
+        if idx > len(setarr) - 1:
+            return node.flag_last or not node.children.empty()
         found = False
         for child in node.children:
             # don't go to subtrees where current element cannot be
