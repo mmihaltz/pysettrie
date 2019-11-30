@@ -22,7 +22,6 @@ See https://www.gnu.org/licenses/lgpl.html
 import sys
 import sortedcontainers
 import bisect
-import itertools
 from collections import deque
 
 __version__ = "0.1.5"
