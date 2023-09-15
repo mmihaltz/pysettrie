@@ -86,7 +86,7 @@ cdef extern from "<set>" namespace "std" nogil:
         #value_compare value_comp()
 
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from cython.operator cimport dereference as deref, postincrement as inc
+from cython.operator cimport dereference as deref, preincrement as inc
 cdef extern from *:
     """
     """
@@ -956,7 +956,7 @@ cdef class SetTrieMap(SetTrie):
         """
         return self.aslist()
     def get(self, keyset, default=None):
-        cdef Node* node = SetTrie._contains(self.root, keyset)
+        cdef Node* node = SetTrie._contains(self.root, iter(sorted(keyset)))
         if node == NULL: return default
         if (<NodeWithValue*>node).value == NULL: return None
         return <object>(<NodeWithValue*>node).value
@@ -965,7 +965,7 @@ cdef class SetTrieMap(SetTrie):
         self.assign(key, value)
     def assign(self, akey, avalue):
         cdef Node* node
-        v = SetTrie._add(self.root, akey, self._construct_func)
+        v = SetTrie._add(self.root, iter(sorted(akey)), self._construct_func)
         node, notadd = v.first, v.second
         if not notadd: self.total_nodes += 1
         if (<NodeWithValue*>node).value != NULL:
@@ -1021,7 +1021,7 @@ cdef class SetTrieMultiMap(SetTrieMap):
         self._ValueOnlyCallback = SetTrieMultiMap._return_last_value
         SetTrieMap.__init__(self, iterable, recursion)
     def assign(self, akey, avalue):
-        cdef Node* node = SetTrie._add(self.root, akey, construct_node_value).first
+        cdef Node* node = SetTrie._add(self.root, iter(sorted(akey)), construct_node_value).first
         if (<NodeWithValue*>node).value == NULL:
             l = [avalue]
             Py_XINCREF(<PyObject*><void*>l)
@@ -1029,11 +1029,11 @@ cdef class SetTrieMultiMap(SetTrieMap):
         else: (<object>(<NodeWithValue*>node).value).append(avalue)
         return len(<object>(<NodeWithValue*>node).value)
     def count(self, keyset):
-        cdef Node* node = SetTrie._contains(self.root, keyset)
+        cdef Node* node = SetTrie._contains(self.root, iter(sorted(keyset)))
         if node == NULL or (<NodeWithValue*>node).value == NULL: return 0
         return len(<object>(<NodeWithValue*>node).value)
     def iterget(self, keyset):
-        cdef Node* node = SetTrie._contains(self.root, keyset)
+        cdef Node* node = SetTrie._contains(self.root, iter(sorted(keyset)))
         if node == NULL or (<NodeWithValue*>node).value == NULL: return iter(())
         return iter(<object>(<NodeWithValue*>node).value)
     @staticmethod
